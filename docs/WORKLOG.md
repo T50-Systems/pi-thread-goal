@@ -28,5 +28,11 @@
 - `npm run typecheck`
 - `npm test`
 - RPC command discovery confirmed that Pi now loads extension command `goal`
-- package installed globally into Pi via local path:
-  - `pi install C:/Users/c___h/source/repos/pi-thread-goal`
+- package installed globally into Pi via local path
+
+### Follow-up polish
+- updated goal UI so the goal widget is hidden when `status === "complete"`
+- added UI regression coverage for complete-goal widget hiding
+- published and pinned the package globally from GitHub release tag:
+  - `git:github.com/T50-Systems/pi-thread-goal@v0.1.0`
+- removed the previous local-path global install so Pi now uses the GitHub-pinned package by default

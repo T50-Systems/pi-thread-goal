@@ -21,7 +21,7 @@ export interface GoalUiContext {
 
 export function applyGoalUi(ctx: GoalUiContext, goal: GoalState | null): void {
   ctx.ui?.setStatus?.("goal", goal ? renderGoalStatusLine(goal) : undefined);
-  ctx.ui?.setWidget?.("goal", goal ? renderGoalWidget(goal) : undefined);
+  ctx.ui?.setWidget?.("goal", goal && goal.status !== "complete" ? renderGoalWidget(goal) : undefined);
 }
 
 export function renderGoalSummary(goal: GoalState): string {
