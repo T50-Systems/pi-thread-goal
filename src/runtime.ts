@@ -34,6 +34,16 @@ interface ContextMessage {
   details?: unknown;
 }
 
+interface CompactionResumeEvent {
+  reason: "manual" | "threshold" | "overflow";
+  willRetry: boolean;
+}
+
+interface RuntimeIdleContext {
+  isIdle?: () => boolean;
+  hasPendingMessages?: () => boolean;
+}
+
 interface EvaluatorDecision {
   met: boolean;
   reason: string;
@@ -81,6 +91,20 @@ export function registerGoalRuntime(pi: ExtensionAPI): void {
         details: { goalId: goal.goalId },
       },
     };
+  });
+
+  pi.on("session_compact", async (event, ctx) => {
+    const goal = loadGoalState(ctx as GoalRuntimeContext);
+    applyGoalUi(ctx as GoalRuntimeContext, goal);
+
+    if (!shouldResumeGoalAfterCompaction(goal, event, ctx as GoalRuntimeContext)) return;
+
+    const prompt = renderGoalContinuationPrompt(
+      goal,
+      "Context was compacted while an active goal remains. Continue from the persisted goal state instead of waiting for another user turn.",
+    );
+    pi.sendUserMessage(prompt);
+    ctx.ui?.notify?.("Continuing active goal after compaction.", "info");
   });
 
   pi.on("session_start", async (event, ctx) => {
@@ -177,6 +201,23 @@ export function filterGoalContextMessages<T extends ContextMessage>(messages: T[
     if (!activeGoalId) return false;
     return index === lastCurrentContextIndex && messageHasGoalId(message, activeGoalId);
   });
+}
+
+export function shouldResumeGoalAfterCompaction(
+  goal: GoalState | null,
+  event: CompactionResumeEvent,
+  ctx: RuntimeIdleContext,
+): goal is GoalState {
+  if (!isActiveGoal(goal)) return false;
+  if (event.willRetry) return false;
+  if (ctx.hasPendingMessages?.() === true) return false;
+
+  const isIdle = ctx.isIdle?.();
+  if (event.reason === "manual") {
+    return isIdle !== false;
+  }
+
+  return isIdle === true;
 }
 
 async function evaluateGoal(goal: GoalState, ctx: GoalRuntimeContext): Promise<EvaluatorDecision> {
