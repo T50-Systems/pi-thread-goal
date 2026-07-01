@@ -1,5 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
-import { applyGoalUi, renderGoalOverlayLines, renderGoalWidget } from "../src/ui.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  applyGoalUi,
+  renderGoalOverlayLines,
+  renderGoalWidget,
+  setGoalWidgetExpanded,
+  toggleGoalWidgetExpanded,
+} from "../src/ui.js";
 import type { GoalState } from "../src/types.js";
 
 const baseGoal: GoalState = {
@@ -18,6 +24,10 @@ const baseGoal: GoalState = {
   lastEvaluationReason: "working",
 };
 
+beforeEach(() => {
+  setGoalWidgetExpanded(false);
+});
+
 describe("applyGoalUi", () => {
   it("hides the widget when goal is complete", () => {
     const setStatus = vi.fn();
@@ -28,6 +38,32 @@ describe("applyGoalUi", () => {
     );
     expect(setStatus).toHaveBeenCalledWith("goal", expect.stringContaining("/goal complete"));
     expect(setWidget).toHaveBeenCalledWith("goal", undefined);
+  });
+
+  it("renders the expanded persistent widget when toggled", () => {
+    const setStatus = vi.fn();
+    const setWidget = vi.fn();
+    setGoalWidgetExpanded(true);
+
+    applyGoalUi(
+      { ui: { setStatus, setWidget } },
+      {
+        ...baseGoal,
+        acceptanceCriteria: ["open", "toggle"],
+        sourcePaths: ["src/ui.ts", "src/commands.ts"],
+        progress: {
+          done: ["compact widget", "overlay"],
+          blocked: ["manual validation"],
+          summary: "Most implementation is done.",
+          current: "Verify the persistent widget.",
+        },
+      },
+    );
+
+    const lines = setWidget.mock.calls[0][1] as string[];
+    expect(lines[0]).toContain("expanded");
+    expect(lines.some((line) => line.startsWith("Done:"))).toBe(true);
+    expect(lines.some((line) => line.startsWith("Criteria:"))).toBe(true);
   });
 });
 
@@ -49,6 +85,29 @@ describe("renderGoalWidget", () => {
     expect(lines[0]).toBe("Goal (active)");
     expect(lines[2]).toBe("Turns 3 · Tokens 16.3M");
     expect(lines.length).toBeLessThanOrEqual(4);
+  });
+
+  it("renders richer detail when expanded", () => {
+    const lines = renderGoalWidget(
+      {
+        ...baseGoal,
+        acceptanceCriteria: ["panel opens", "panel toggles"],
+        sourcePaths: ["src/ui.ts", "src/commands.ts", "tests/ui.test.ts"],
+        progress: {
+          done: ["compact widget", "overlay renderer"],
+          blocked: ["manual TUI validation pending"],
+          summary: "Most implementation is done.",
+          current: "Validate the overlay in Pi.",
+        },
+      },
+      true,
+    );
+
+    expect(lines[0]).toContain("expanded");
+    expect(lines.some((line) => line.startsWith("Done:"))).toBe(true);
+    expect(lines.some((line) => line.startsWith("Blocked:"))).toBe(true);
+    expect(lines.some((line) => line.startsWith("Criteria:"))).toBe(true);
+    expect(lines.some((line) => line.startsWith("Paths:"))).toBe(true);
   });
 });
 
@@ -98,5 +157,12 @@ describe("renderGoalOverlayLines", () => {
     expect(lines.some((line) => line.includes("Acceptance criteria:"))).toBe(true);
     expect(lines.some((line) => line.includes("Paths:"))).toBe(true);
     expect(lines.some((line) => line.includes("Enter/Space collapse"))).toBe(true);
+  });
+});
+
+describe("toggleGoalWidgetExpanded", () => {
+  it("toggles between collapsed and expanded", () => {
+    expect(toggleGoalWidgetExpanded()).toBe(true);
+    expect(toggleGoalWidgetExpanded()).toBe(false);
   });
 });

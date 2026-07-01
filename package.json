@@ -1,6 +1,6 @@
 {
   "name": "pi-thread-goal",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Persistent Claude-style /goal workflows for Pi with branch-aware state and automatic cross-turn continuation.",
   "type": "module",
   "license": "MIT",

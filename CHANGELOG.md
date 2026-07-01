@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-07-01
+
+### Added
+- persistent goal widget expansion controls via `/goal toggle`, `/goal expand`, and `/goal collapse`.
+
+### Improved
+- expanded widget mode can now show richer progress, blocked items, criteria, and paths without relying only on the overlay.
+- added regression coverage for widget expansion command parsing and expanded widget rendering.
+
 ## 0.2.0 - 2026-07-01
 
 ### Added
