@@ -8,7 +8,9 @@ import {
   noGoalMessage,
   nonInteractiveConfirmationMessage,
   renderGoalSummary,
+  setGoalWidgetExpanded,
   showGoalOverlay,
+  toggleGoalWidgetExpanded,
 } from "./ui.js";
 import type { GoalState } from "./types.js";
 
@@ -21,7 +23,10 @@ export type GoalCommandKind =
   | "resume"
   | "start"
   | "clear"
-  | "complete";
+  | "complete"
+  | "toggle"
+  | "expand"
+  | "collapse";
 
 export interface ParsedGoalCommand {
   kind: GoalCommandKind;
@@ -54,7 +59,7 @@ interface GoalCommandContext {
   };
 }
 
-const CONTROL_COMMANDS = ["status", "edit", "pause", "resume", "start", "clear", "complete"];
+const CONTROL_COMMANDS = ["status", "edit", "pause", "resume", "start", "clear", "complete", "toggle", "expand", "collapse"];
 const RECOGNIZED_FLAGS = new Set(["--yes", "-y", "--replace", "--start"]);
 
 export function registerGoalCommand(pi: ExtensionAPI): void {
@@ -85,6 +90,9 @@ export function parseGoalCommand(args: string): ParsedGoalCommand {
   if (first === "start") return { kind: "start", confirmed, replace, start: true };
   if (first === "clear") return { kind: "clear", confirmed, replace, start };
   if (first === "complete") return { kind: "complete", confirmed, replace, start };
+  if (first === "toggle") return { kind: "toggle", confirmed, replace, start };
+  if (first === "expand") return { kind: "expand", confirmed, replace, start };
+  if (first === "collapse") return { kind: "collapse", confirmed, replace, start };
 
   if (["clear", "stop", "off", "reset", "none", "cancel"].includes(first)) {
     return { kind: "clear", confirmed, replace, start };
@@ -114,6 +122,24 @@ export async function handleGoalCommand(
     } else {
       ctx.ui.notify(renderGoalSummary(current), "info");
     }
+    return;
+  }
+
+  if (parsed.kind === "toggle" || parsed.kind === "expand" || parsed.kind === "collapse") {
+    const current = loadGoalState(ctx);
+    if (!current) {
+      ctx.ui.notify(noGoalMessage(parsed.kind), "warning");
+      applyGoalUi(ctx, null);
+      return;
+    }
+    const expanded =
+      parsed.kind === "toggle"
+        ? toggleGoalWidgetExpanded()
+        : parsed.kind === "expand"
+          ? (setGoalWidgetExpanded(true), true)
+          : (setGoalWidgetExpanded(false), false);
+    applyGoalUi(ctx, current);
+    ctx.ui.notify(`Goal widget ${expanded ? "expanded" : "collapsed"}.`, "info");
     return;
   }
 
