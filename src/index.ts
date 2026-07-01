@@ -15,7 +15,14 @@ export {
   renderGoalContinuationPrompt,
   renderGoalCompactionSummary,
 } from "./prompts.js";
-export { applyGoalUi, renderGoalSummary, renderGoalStatusLine, renderGoalWidget } from "./ui.js";
+export {
+  applyGoalUi,
+  renderGoalOverlayLines,
+  renderGoalSummary,
+  renderGoalStatusLine,
+  renderGoalWidget,
+  showGoalOverlay,
+} from "./ui.js";
 
 export default function goalExtension(pi: ExtensionAPI): void {
   registerGoalCommand(pi);

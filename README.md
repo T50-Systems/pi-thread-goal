@@ -11,7 +11,7 @@ Pi-native Claude-style `/goal` for Pi.
 
 ## Status
 
-- current version: `0.1.0`
+- current version: `0.2.0`
 - language: TypeScript
 - runtime: Pi extension package
 - maturity: usable early release
@@ -47,7 +47,7 @@ When a goal is active:
 - event-sourced goal history
 - direct command UX
 - automatic continuation after each turn
-- footer and widget UI status
+- compact widget + interactive overlay status UI
 - compaction-aware summary augmentation
 - model tools with explicit guardrails
 
@@ -109,13 +109,13 @@ npm run typecheck
 npm test
 ```
 
-## Release scope for `v0.1.0`
+## Release scope for `v0.2.0`
 
-This first release establishes:
+This release establishes:
 - core `/goal` command surface
 - Pi-native persistent state
 - evaluator-driven continuation loop
-- status UI primitives
+- compact persistent widget plus expandable `/goal status` overlay
 - tests for commands, state, and runtime behavior
 
 It does **not** yet include:
