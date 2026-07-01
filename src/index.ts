@@ -17,11 +17,14 @@ export {
 } from "./prompts.js";
 export {
   applyGoalUi,
+  isGoalWidgetExpanded,
   renderGoalOverlayLines,
   renderGoalSummary,
   renderGoalStatusLine,
   renderGoalWidget,
+  setGoalWidgetExpanded,
   showGoalOverlay,
+  toggleGoalWidgetExpanded,
 } from "./ui.js";
 
 export default function goalExtension(pi: ExtensionAPI): void {

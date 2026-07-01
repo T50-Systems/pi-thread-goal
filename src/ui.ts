@@ -1,5 +1,7 @@
 import type { GoalState } from "./types.js";
 
+let goalWidgetExpanded = false;
+
 export const GOAL_USAGE = [
   "Usage:",
   "  /goal <objective>",
@@ -46,7 +48,23 @@ interface GoalOverlayTheme {
 
 export function applyGoalUi(ctx: GoalUiContext, goal: GoalState | null): void {
   ctx.ui?.setStatus?.("goal", goal ? renderGoalStatusLine(goal) : undefined);
-  ctx.ui?.setWidget?.("goal", goal && goal.status !== "complete" ? renderGoalWidget(goal) : undefined);
+  ctx.ui?.setWidget?.("goal", goal && goal.status !== "complete" ? renderGoalWidget(goal, goalWidgetExpanded) : undefined);
+}
+
+export function isGoalWidgetExpanded(): boolean {
+  return goalWidgetExpanded;
+}
+
+export function setGoalWidgetExpanded(expanded: boolean): boolean {
+  const next = Boolean(expanded);
+  const changed = goalWidgetExpanded !== next;
+  goalWidgetExpanded = next;
+  return changed;
+}
+
+export function toggleGoalWidgetExpanded(): boolean {
+  goalWidgetExpanded = !goalWidgetExpanded;
+  return goalWidgetExpanded;
 }
 
 export async function showGoalOverlay(ctx: GoalUiContext, goal: GoalState): Promise<void> {
@@ -119,9 +137,9 @@ export function renderGoalStatusLine(goal: GoalState): string {
   return `${prefix}: ${goal.objective}`;
 }
 
-export function renderGoalWidget(goal: GoalState): string[] {
+export function renderGoalWidget(goal: GoalState, expanded = false): string[] {
   const lines = [
-    `Goal (${goal.status})`,
+    `Goal (${goal.status})${expanded ? " · expanded" : ""}`,
     truncate(goal.objective, 72),
     `Turns ${goal.evaluationTurns} · Tokens ${formatCompactNumber(goal.usage.total)}`,
   ];
@@ -130,7 +148,19 @@ export function renderGoalWidget(goal: GoalState): string[] {
   } else if (goal.progress.summary) {
     lines.push(`Progress: ${truncate(goal.progress.summary, 72)}`);
   }
-  if (goal.progress.blocked.length > 0) lines.push(`Blocked: ${truncate(goal.progress.blocked.join("; "), 72)}`);
+  if (!expanded) {
+    if (goal.progress.blocked.length > 0) lines.push(`Blocked: ${truncate(goal.progress.blocked.join("; "), 72)}`);
+    return lines;
+  }
+  if (goal.progress.summary && goal.progress.summary !== goal.progress.current) {
+    lines.push(`Summary: ${truncate(goal.progress.summary, 72)}`);
+  }
+  if (goal.progress.done.length > 0) lines.push(`Done: ${truncate(summarizeList(goal.progress.done), 72)}`);
+  if (goal.progress.blocked.length > 0) lines.push(`Blocked: ${truncate(summarizeList(goal.progress.blocked), 72)}`);
+  if (goal.acceptanceCriteria.length > 0) {
+    lines.push(`Criteria: ${truncate(summarizeList(goal.acceptanceCriteria), 72)}`);
+  }
+  if (goal.sourcePaths.length > 0) lines.push(`Paths: ${truncate(summarizeList(goal.sourcePaths), 72)}`);
   return lines;
 }
 

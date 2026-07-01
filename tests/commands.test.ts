@@ -24,4 +24,25 @@ describe("parseGoalCommand", () => {
       start: true,
     });
   });
+
+  it("parses widget toggle commands", () => {
+    expect(parseGoalCommand("toggle")).toEqual({
+      kind: "toggle",
+      confirmed: false,
+      replace: false,
+      start: false,
+    });
+    expect(parseGoalCommand("expand")).toEqual({
+      kind: "expand",
+      confirmed: false,
+      replace: false,
+      start: false,
+    });
+    expect(parseGoalCommand("collapse")).toEqual({
+      kind: "collapse",
+      confirmed: false,
+      replace: false,
+      start: false,
+    });
+  });
 });
