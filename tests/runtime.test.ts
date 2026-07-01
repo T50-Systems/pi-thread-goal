@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterGoalContextMessages } from "../src/runtime.js";
+import { filterGoalContextMessages, shouldResumeGoalAfterCompaction } from "../src/runtime.js";
 import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {
@@ -34,5 +34,54 @@ describe("filterGoalContextMessages", () => {
   it("drops goal contexts when no active goal exists", () => {
     const messages = [{ customType: "thread-goal-context", details: { goalId: "g1" }, content: "old" }];
     expect(filterGoalContextMessages(messages, null)).toEqual([]);
+  });
+});
+
+describe("shouldResumeGoalAfterCompaction", () => {
+  it("continues active goals after manual compaction when idle", () => {
+    expect(
+      shouldResumeGoalAfterCompaction(
+        goal,
+        { reason: "manual", willRetry: false },
+        { isIdle: () => true, hasPendingMessages: () => false },
+      ),
+    ).toBe(true);
+  });
+
+  it("does not continue when pi will retry the aborted turn", () => {
+    expect(
+      shouldResumeGoalAfterCompaction(
+        goal,
+        { reason: "overflow", willRetry: true },
+        { isIdle: () => true, hasPendingMessages: () => false },
+      ),
+    ).toBe(false);
+  });
+
+  it("does not inject duplicate continuation over queued messages", () => {
+    expect(
+      shouldResumeGoalAfterCompaction(
+        goal,
+        { reason: "manual", willRetry: false },
+        { isIdle: () => true, hasPendingMessages: () => true },
+      ),
+    ).toBe(false);
+  });
+
+  it("only resumes threshold compaction when the runtime is already idle", () => {
+    expect(
+      shouldResumeGoalAfterCompaction(
+        goal,
+        { reason: "threshold", willRetry: false },
+        { isIdle: () => false, hasPendingMessages: () => false },
+      ),
+    ).toBe(false);
+    expect(
+      shouldResumeGoalAfterCompaction(
+        goal,
+        { reason: "threshold", willRetry: false },
+        { isIdle: () => true, hasPendingMessages: () => false },
+      ),
+    ).toBe(true);
   });
 });
