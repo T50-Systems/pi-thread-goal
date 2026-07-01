@@ -1,5 +1,16 @@
 # Worklog
 
+## 2026-07-01
+
+### Goal status custom UI
+- added a custom `/goal` / `/goal status` overlay using `ctx.ui.custom()`
+- made the overlay expand/collapse on `Enter` or `Space` and close on `Esc`
+- kept the persistent goal widget intentionally compact so the dense detail only appears on demand
+- added renderer tests for collapsed and expanded overlay states
+- verified with:
+  - `npm run typecheck`
+  - `npm test`
+
 ## 2026-06-30
 
 ### Created `pi-thread-goal`

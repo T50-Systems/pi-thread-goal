@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 - 2026-07-01
+
+### Added
+- interactive `/goal` status overlay via `ctx.ui.custom()` with expand/collapse controls for richer on-demand detail.
+
+### Improved
+- kept the persistent goal widget compact while moving detail density into the overlay panel.
+- added regression coverage for the compact widget and overlay rendering.
+
 ## 0.1.0 - 2026-06-30
 
 Initial release.
