@@ -2,7 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { renderGoalStartPrompt } from "./prompts.js";
 import { loadGoalState, saveGoalState, validateObjective } from "./state.js";
-import { GOAL_USAGE, applyGoalUi, noGoalMessage, nonInteractiveConfirmationMessage, renderGoalSummary } from "./ui.js";
+import {
+  GOAL_USAGE,
+  applyGoalUi,
+  noGoalMessage,
+  nonInteractiveConfirmationMessage,
+  renderGoalSummary,
+  showGoalOverlay,
+} from "./ui.js";
 import type { GoalState } from "./types.js";
 
 export type GoalCommandKind =
@@ -35,6 +42,15 @@ interface GoalCommandContext {
     editor(title: string, initialValue: string): Promise<string | undefined>;
     setStatus(key: string, value: string | undefined): void;
     setWidget(key: string, value: string[] | undefined): void;
+    custom?<T>(
+      factory: (
+        tui: { requestRender(): void },
+        theme: unknown,
+        keybindings: unknown,
+        done: (result: T) => void,
+      ) => { render(width: number): string[]; invalidate(): void; handleInput?(data: string): void },
+      options?: { overlay?: boolean; overlayOptions?: Record<string, unknown> },
+    ): Promise<T>;
   };
 }
 
@@ -92,8 +108,12 @@ export async function handleGoalCommand(
       applyGoalUi(ctx, null);
       return;
     }
-    ctx.ui.notify(renderGoalSummary(current), "info");
     applyGoalUi(ctx, current);
+    if (ctx.hasUI && ctx.ui.custom) {
+      await showGoalOverlay(ctx, current);
+    } else {
+      ctx.ui.notify(renderGoalSummary(current), "info");
+    }
     return;
   }
 
