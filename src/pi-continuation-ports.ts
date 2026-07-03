@@ -1,4 +1,4 @@
-import { saveGoalState } from "./state.js";
+import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { validateGoalStateInvariant } from "./state-invariants.js";
 import type { GoalRuntimeContext, RuntimeExtensionAPI } from "./runtime-types.js";
 import type { GoalStateStore, GoalMessageQueue, GoalNotifier } from "./goal-runtime-ports.js";
@@ -9,7 +9,7 @@ export function createPiContinuationStore(
 ): GoalStateStore {
 	return {
 		markPending(goal, reason) {
-			const pending = saveGoalState(
+			const pending = saveGoalOperation(
 				pi,
 				{
 					action: "continuation",

@@ -27,7 +27,8 @@ import {
 	filterGoalContextMessages,
 	shouldResumeGoalAfterCompaction,
 } from "./runtime-guards.js";
-import { loadGoalState, saveGoalState } from "./state.js";
+import { loadGoalState } from "./state.js";
+import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { applyGoalUi } from "./ui.js";
 import { collectUsage } from "./usage-collector.js";
 import type {
@@ -75,7 +76,7 @@ export async function handleBeforeAgentStart(
 		};
 	}
 	const current = goal.continuationPendingAt
-		? (saveGoalState(
+		? (saveGoalOperation(
 				runtimePi,
 				{
 					action: "continuation",
@@ -236,7 +237,7 @@ async function handleAgentEnd(
 			(decision.met
 				? "Goal condition satisfied."
 				: "Goal condition not yet satisfied.");
-		const evaluated = saveGoalState(
+		const evaluated = saveGoalOperation(
 			runtimePi,
 			{
 				action: "evaluation",
