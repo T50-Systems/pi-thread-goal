@@ -1,117 +1,157 @@
 export type GoalStatus = "active" | "paused" | "complete";
 
 export interface GoalProgress {
-  done: string[];
-  current?: string;
-  blocked: string[];
-  summary: string;
+	done: string[];
+	current?: string;
+	blocked: string[];
+	summary: string;
 }
 
 export interface GoalUsage {
-  input: number;
-  output: number;
-  cacheRead: number;
-  cacheWrite: number;
-  total: number;
+	input: number;
+	output: number;
+	cacheRead: number;
+	cacheWrite: number;
+	total: number;
 }
 
+export type GoalPauseReason =
+	| "manual"
+	| "turn-limit"
+	| "token-budget"
+	| "error";
+
 export interface GoalState {
-  version: 1;
-  goalId: string;
-  objective: string;
-  status: GoalStatus;
-  acceptanceCriteria: string[];
-  sourcePaths: string[];
-  progress: GoalProgress;
-  createdAt: number;
-  updatedAt: number;
-  runStartedAt: number;
-  evaluationTurns: number;
-  usage: GoalUsage;
-  lastEvaluationReason: string;
-  completedAt?: number;
+	version: 1;
+	goalId: string;
+	objective: string;
+	status: GoalStatus;
+	acceptanceCriteria: string[];
+	sourcePaths: string[];
+	tokenBudget?: number;
+	pauseReason?: GoalPauseReason;
+	pauseMessage?: string;
+	progress: GoalProgress;
+	createdAt: number;
+	updatedAt: number;
+	runStartedAt: number;
+	evaluationTurns: number;
+	usage: GoalUsage;
+	lastEvaluationReason: string;
+	completedAt?: number;
+	dismissedAt?: number;
+	continuationPendingAt?: number;
+	continuationReason?: string;
 }
 
 export interface GoalCreateEvent {
-  action: "create";
-  goalId: string;
-  objective: string;
-  now: number;
-  acceptanceCriteria?: string[];
-  sourcePaths?: string[];
+	action: "create";
+	goalId: string;
+	objective: string;
+	now: number;
+	acceptanceCriteria?: string[];
+	sourcePaths?: string[];
+	tokenBudget?: number;
 }
 
 export interface GoalReplaceEvent extends Omit<GoalCreateEvent, "action"> {
-  action: "replace";
+	action: "replace";
 }
 
 export interface GoalEditEvent {
-  action: "edit";
-  goalId: string;
-  now: number;
-  objective?: string;
-  acceptanceCriteria?: string[];
-  sourcePaths?: string[];
+	action: "edit";
+	goalId: string;
+	now: number;
+	objective?: string;
+	acceptanceCriteria?: string[];
+	sourcePaths?: string[];
+	tokenBudget?: number;
 }
 
 export interface GoalPauseEvent {
-  action: "pause";
-  goalId: string;
-  now: number;
+	action: "pause";
+	goalId: string;
+	now: number;
+	reason?: GoalPauseReason;
+	message?: string;
 }
 
 export interface GoalResumeEvent {
-  action: "resume";
-  goalId: string;
-  now: number;
+	action: "resume";
+	goalId: string;
+	now: number;
 }
 
 export interface GoalClearEvent {
-  action: "clear";
-  goalId: string;
-  now: number;
+	action: "clear";
+	goalId: string;
+	now: number;
 }
 
 export interface GoalCompleteEvent {
-  action: "complete";
-  goalId: string;
-  now: number;
-  evidence?: string;
+	action: "complete";
+	goalId: string;
+	now: number;
+	evidence?: string;
+}
+
+export interface GoalDismissEvent {
+	action: "dismiss";
+	goalId: string;
+	now: number;
 }
 
 export interface GoalProgressEvent {
-  action: "progress";
-  goalId: string;
-  now: number;
-  progress: Partial<GoalProgress>;
+	action: "progress";
+	goalId: string;
+	now: number;
+	progress: Partial<GoalProgress>;
 }
 
 export interface GoalEvaluationEvent {
-  action: "evaluation";
-  goalId: string;
-  now: number;
-  reason: string;
-  usage?: Partial<GoalUsage>;
+	action: "evaluation";
+	goalId: string;
+	now: number;
+	reason: string;
+	usage?: Partial<GoalUsage>;
+}
+
+export interface GoalContinuationEvent {
+	action: "continuation";
+	goalId: string;
+	now: number;
+	pending: boolean;
+	reason?: string;
 }
 
 export type GoalEvent =
-  | GoalCreateEvent
-  | GoalReplaceEvent
-  | GoalEditEvent
-  | GoalPauseEvent
-  | GoalResumeEvent
-  | GoalClearEvent
-  | GoalCompleteEvent
-  | GoalProgressEvent
-  | GoalEvaluationEvent;
+	| GoalCreateEvent
+	| GoalReplaceEvent
+	| GoalEditEvent
+	| GoalPauseEvent
+	| GoalResumeEvent
+	| GoalClearEvent
+	| GoalCompleteEvent
+	| GoalDismissEvent
+	| GoalProgressEvent
+	| GoalEvaluationEvent
+	| GoalContinuationEvent;
 
 export interface GoalStateEntry {
-  action: GoalEvent["action"];
-  state: GoalState | null;
-  event: GoalEvent;
+	action: GoalEvent["action"];
+	state: GoalState | null;
+	event: GoalEvent;
 }
 
 export interface GoalStateSnapshot {
-  current: GoalState | null;
-  entries: GoalStateEntry[];
+	current: GoalState | null;
+	entries: GoalStateEntry[];
 }
+
+
+export interface EvaluatorDecision {
+	met: boolean;
+	reason: string;
+}
+
+export type GoalRuntimeInterruptionKind = "retryable" | "non-retryable";
