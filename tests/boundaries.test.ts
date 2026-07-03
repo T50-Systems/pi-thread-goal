@@ -87,7 +87,7 @@ describe("source boundaries", () => {
 
 	it("keeps concrete Pi continuation code in the Pi continuation adapter", () => {
 		const source = readSource("src/pi-continuation-ports.ts");
-		expect(source).toMatch(/saveGoalState/);
+		expect(source).toMatch(/saveGoalOperation/);
 		expect(source).toMatch(/sendUserMessage/);
 	});
 });

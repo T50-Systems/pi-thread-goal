@@ -1,7 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { validateGoalCompletion } from "./completion-policy.js";
-import { loadGoalState, saveGoalState, validateObjective } from "./state.js";
+import { loadGoalState, validateObjective } from "./state.js";
+import { saveGoalOperation } from "./goal-operation-workflow.js";
 import type { GoalProgress, GoalState } from "./types.js";
 export { validateGoalCompletion } from "./completion-policy.js";
 
@@ -72,7 +73,7 @@ export function registerGoalTools(pi: ExtensionAPI): void {
       if (current) {
         throw new Error("A goal already exists. Replace it only through an explicit user command.");
       }
-      const next = saveGoalState(
+      const next = saveGoalOperation(
         pi,
         {
           action: "create",
@@ -112,7 +113,7 @@ export function registerGoalTools(pi: ExtensionAPI): void {
       if (!validation.ok) {
         throw new Error(validation.reason);
       }
-      const next = saveGoalState(
+      const next = saveGoalOperation(
         pi,
         {
           action: "complete",
@@ -146,7 +147,7 @@ export function registerGoalTools(pi: ExtensionAPI): void {
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const current = loadGoalState(ctx as GoalToolContext);
       assertActiveGoal(current, "update");
-      const next = saveGoalState(
+      const next = saveGoalOperation(
         pi,
         {
           action: "progress",

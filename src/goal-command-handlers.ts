@@ -5,7 +5,8 @@ import {
 	renderGoalEditDocument,
 } from "./goal-edit-document.js";
 import { renderGoalStartPrompt } from "./prompts.js";
-import { loadGoalState, saveGoalState, validateObjective } from "./state.js";
+import { loadGoalState, validateObjective } from "./state.js";
+import { saveGoalOperation } from "./goal-operation-workflow.js";
 import {
 	GOAL_USAGE,
 	applyGoalUi,
@@ -167,7 +168,7 @@ async function createOrReplaceGoal(
 				causedBy: "/goal create",
 			};
 
-	const next = saveGoalState(pi, event, current);
+	const next = saveGoalOperation(pi, event, current);
 	applyGoalUi(ctx, next);
 	ctx.ui.notify(current ? "Goal replaced." : "Goal created.", "info");
 	if (next) {
@@ -202,7 +203,7 @@ async function editGoal(
 	}
 
 	const parsed = parseGoalEditDocument(edited);
-	const next = saveGoalState(
+	const next = saveGoalOperation(
 		pi,
 		{
 			action: "edit",
@@ -231,7 +232,7 @@ function handlePauseGoal(
 		ctx.ui.notify(noGoalMessage("pause"), "error");
 		return;
 	}
-	const next = saveGoalState(
+	const next = saveGoalOperation(
 		pi,
 		{
 			action: "pause",
@@ -257,7 +258,7 @@ function handleResumeGoal(
 		ctx.ui.notify(noGoalMessage("resume"), "error");
 		return;
 	}
-	const next = saveGoalState(
+	const next = saveGoalOperation(
 		pi,
 		{
 			action: "resume",
@@ -305,7 +306,7 @@ async function handleClearGoal(
 		"/goal clear",
 	);
 	if (!ok) return;
-	const next = saveGoalState(
+	const next = saveGoalOperation(
 		pi,
 		{
 			action: "clear",
@@ -338,7 +339,7 @@ async function handleCompleteGoal(
 		"/goal complete",
 	);
 	if (!ok) return;
-	const next = saveGoalState(
+	const next = saveGoalOperation(
 		pi,
 		{
 			action: "complete",
@@ -363,7 +364,7 @@ function handleDismissGoal(
 		ctx.ui.notify(noGoalMessage("dismiss"), "warning");
 		return;
 	}
-	const next = saveGoalState(
+	const next = saveGoalOperation(
 		pi,
 		{
 			action: "dismiss",

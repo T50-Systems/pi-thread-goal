@@ -19,6 +19,11 @@ export interface GoalAppendAPI {
 	appendEntry(customType: string, data?: unknown): unknown;
 }
 
+/**
+ * Low-level legacy reducer persistence used for replay-compatible callers.
+ * Prefer saveGoalOperation/executeGoalOperation for runtime, tool, and user
+ * mutations so goal operation contracts verify metadata and postconditions.
+ */
 export function saveGoalState(
 	pi: GoalAppendAPI,
 	event: GoalEvent,

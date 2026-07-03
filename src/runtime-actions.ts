@@ -9,7 +9,8 @@ import { classifyGoalRuntimeError } from "./evaluator-policy.js";
 import { MAX_AUTOMATIC_CONTINUATION_TURNS, type GoalNextAction } from "./next-action.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import { renderGoalContinuationPrompt } from "./prompts.js";
-import { loadGoalState, saveGoalState } from "./state.js";
+import { loadGoalState } from "./state.js";
+import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { validateGoalStateInvariant } from "./state-invariants.js";
 import { applyGoalUi } from "./ui.js";
 import type { GoalState } from "./types.js";
@@ -29,7 +30,7 @@ export function applyGoalAction(
 	const { runtimePi, runtimeCtx, continuationGuard } = services;
 	switch (action.type) {
 		case "complete": {
-			const next = saveGoalState(
+			const next = saveGoalOperation(
 				runtimePi,
 				{
 					action: "complete",
@@ -102,7 +103,7 @@ export function pauseGoal(
 ): void {
 	const { runtimePi, runtimeCtx, continuationGuard } = services;
 	clearQueuedGoalContinuation(continuationGuard, goal.goalId);
-	const paused = saveGoalState(
+	const paused = saveGoalOperation(
 		runtimePi,
 		{
 			action: "pause",
