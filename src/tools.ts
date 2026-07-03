@@ -1,7 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { validateGoalCompletion } from "./completion-policy.js";
 import { loadGoalState, saveGoalState, validateObjective } from "./state.js";
 import type { GoalProgress, GoalState } from "./types.js";
+export { validateGoalCompletion } from "./completion-policy.js";
 
 const getGoalParams = Type.Object({}, { additionalProperties: false });
 const createGoalParams = Type.Object(
@@ -39,9 +41,9 @@ export function registerGoalTools(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "get_goal",
     label: "Get Goal",
-    description: "Get the current active /goal state, progress, and relevant paths.",
-    promptSnippet: "Use get_goal to read the current persisted /goal state before goal-directed work.",
-    promptGuidelines: ["Use get_goal when you need the current persisted /goal state before acting."],
+    description: "Read the current /goal state for context.",
+    promptSnippet: "Use get_goal quietly when persisted /goal context is needed.",
+    promptGuidelines: ["Use get_goal only when the persisted /goal state is needed; do not narrate the internal lookup to the user."],
     parameters: getGoalParams,
     async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
       const current = loadGoalState(ctx as GoalToolContext);
@@ -83,7 +85,7 @@ export function registerGoalTools(pi: ExtensionAPI): void {
         current,
       );
       return {
-        content: [{ type: "text", text: next ? `Goal created: ${next.objective}` : "Goal not created." }],
+        content: [{ type: "text", text: next ? "Goal created." : "Goal not created." }],
         details: { goal: next },
       };
     },
@@ -97,12 +99,15 @@ export function registerGoalTools(pi: ExtensionAPI): void {
     promptGuidelines: [
       "Use complete_goal only when evidence shows the current objective is complete.",
       "Do not use complete_goal to stop work early or to pause a goal.",
+      "Resolve blockers and update current progress before completing the goal.",
     ],
     parameters: completeGoalParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const current = loadGoalState(ctx as GoalToolContext);
-      if (!current) {
-        throw new Error("No goal exists to complete.");
+      assertActiveGoal(current, "complete");
+      const validation = validateGoalCompletion(current, params.evidence);
+      if (!validation.ok) {
+        throw new Error(validation.reason);
       }
       const next = saveGoalState(
         pi,
@@ -110,8 +115,9 @@ export function registerGoalTools(pi: ExtensionAPI): void {
         current,
       );
       return {
-        content: [{ type: "text", text: next ? `Goal completed: ${next.objective}` : "Goal not completed." }],
+        content: [{ type: "text", text: next ? "Goal completed." : "Goal not completed." }],
         details: { goal: next },
+        terminate: Boolean(next && next.status === "complete"),
       };
     },
   });
@@ -128,9 +134,7 @@ export function registerGoalTools(pi: ExtensionAPI): void {
     parameters: updateGoalProgressParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const current = loadGoalState(ctx as GoalToolContext);
-      if (!current) {
-        throw new Error("No goal exists to update.");
-      }
+      assertActiveGoal(current, "update");
       const next = saveGoalState(
         pi,
         {
@@ -163,18 +167,27 @@ function normalizeProgressInput(params: {
   };
 }
 
-function formatGoal(goal: GoalState): string {
+function assertActiveGoal(goal: GoalState | null, action: string): asserts goal is GoalState {
+  if (!goal) {
+    throw new Error(`No goal exists to ${action}.`);
+  }
+  if (goal.status !== "active") {
+    throw new Error(`Goal is not active; current status is ${goal.status}.`);
+  }
+}
+
+
+export function formatGoal(goal: GoalState): string {
   return [
-    `Goal: ${goal.objective}`,
-    `Status: ${goal.status}`,
+    `/goal ${goal.status}`,
+    goal.progress.current ? `Now: ${goal.progress.current}` : undefined,
     `Progress: ${goal.progress.summary || "No progress recorded yet."}`,
-    goal.progress.current ? `Current: ${goal.progress.current}` : undefined,
     goal.progress.blocked.length > 0 ? `Blocked: ${goal.progress.blocked.join("; ")}` : undefined,
   ]
     .filter((line): line is string => Boolean(line))
     .join("\n");
 }
 
-function formatGoalProgressUpdate(goal: GoalState): string {
-  return `Progress updated for goal: ${goal.objective}`;
+export function formatGoalProgressUpdate(_goal: GoalState): string {
+  return "Progress noted.";
 }
