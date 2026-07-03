@@ -1,6 +1,7 @@
 import type { GoalState } from "./types.js";
 
 export const GOAL_CONTEXT_CUSTOM_TYPE = "thread-goal-context";
+export const GOAL_PAUSED_CONTEXT_CUSTOM_TYPE = "thread-goal-paused-context";
 
 export function renderGoalContext(goal: GoalState): string {
 	return [
@@ -29,6 +30,25 @@ export function renderGoalContext(goal: GoalState): string {
 		"- Use complete_goal only when current evidence shows the objective is actually complete and no blockers/current work contradict completion.",
 		"- For ongoing batch goals, finishing one item is progress only; continue with the next unfinished item instead of stopping after a status report.",
 		"</goal_context>",
+	]
+		.filter((line): line is string => Boolean(line))
+		.join("\n");
+}
+
+export function renderPausedGoalContext(goal: GoalState): string {
+	return [
+		`<paused_goal_context goal_id="${escapeXml(goal.goalId)}">`,
+		`Objective: ${escapeXml(goal.objective)}`,
+		"Status: paused",
+		`Pause reason: ${escapeXml(goal.pauseReason ?? "manual")}`,
+		goal.pauseMessage
+			? `Pause message: ${escapeXml(goal.pauseMessage)}`
+			: undefined,
+		"Rules:",
+		"- This goal is paused by user/runtime state. Do not resume, restart, continue, or mutate it unless the user explicitly runs /goal resume or asks to resume the goal.",
+		"- Ignore any stale queued continuation prompt for this goal.",
+		"- If the user is working on a different task, answer that task normally without treating this goal as active.",
+		"</paused_goal_context>",
 	]
 		.filter((line): line is string => Boolean(line))
 		.join("\n");
@@ -99,8 +119,11 @@ export function renderGoalContinuationPrompt(
 	reason: string,
 ): string {
 	return [
-		"Continue working toward the active goal.",
+		"Continue working toward the active goal only if it is still active.",
+		"Before resuming, use get_goal if needed to confirm the persisted goal still exists, is active, and has this same goal_id.",
+		"If the goal is paused, complete, missing, or different, do not resume or mutate it; treat this as a stale continuation and stop.",
 		"",
+		`goal_id: ${escapeXml(goal.goalId)}`,
 		`<goal_condition>${escapeXml(goal.objective)}</goal_condition>`,
 		"",
 		`Evaluator reason: ${escapeXml(reason)}`,
@@ -111,7 +134,7 @@ export function renderGoalContinuationPrompt(
 			? `Previous current work: ${escapeXml(goal.progress.current)}`
 			: undefined,
 		"",
-		"Address the evaluator reason directly and keep working until the goal condition is satisfied. If the prior turn only reported intermediate status, choose the next unfinished item and continue rather than stopping.",
+		"Address the evaluator reason directly only after confirming the goal is still active. Keep working until the goal condition is satisfied. If the prior turn only reported intermediate status, choose the next unfinished item and continue rather than stopping.",
 	]
 		.filter((line): line is string => Boolean(line))
 		.join("\n");

@@ -1,19 +1,29 @@
-import { GOAL_CONTEXT_CUSTOM_TYPE } from "./prompts.js";
+import { canAutoResumeGoal } from "./goal-state-machine.js";
+import {
+	GOAL_CONTEXT_CUSTOM_TYPE,
+	GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,
+} from "./prompts.js";
 import type { GoalState } from "./types.js";
-import type { CompactionResumeEvent, ContextMessage, RuntimeIdleContext } from "./runtime-types.js";
+import type {
+	CompactionResumeEvent,
+	ContextMessage,
+	RuntimeIdleContext,
+} from "./runtime-types.js";
 
 export function filterGoalContextMessages<T extends ContextMessage>(
 	messages: T[],
 	goal: GoalState | null,
 ): T[] {
-	const activeGoalId = isActiveGoal(goal) ? goal.goalId : undefined;
+	const expectedCustomType = resolveGoalContextCustomType(goal);
+	const expectedGoalId = expectedCustomType ? goal?.goalId : undefined;
 	let lastCurrentContextIndex = -1;
 
-	if (activeGoalId) {
+	if (expectedCustomType && expectedGoalId) {
 		messages.forEach((message, index) => {
 			if (
 				isGoalContextMessage(message) &&
-				messageHasGoalId(message, activeGoalId)
+				message.customType === expectedCustomType &&
+				messageHasGoalId(message, expectedGoalId)
 			) {
 				lastCurrentContextIndex = index;
 			}
@@ -22,10 +32,11 @@ export function filterGoalContextMessages<T extends ContextMessage>(
 
 	return messages.filter((message, index) => {
 		if (!isGoalContextMessage(message)) return true;
-		if (!activeGoalId) return false;
+		if (!expectedCustomType || !expectedGoalId) return false;
 		return (
 			index === lastCurrentContextIndex &&
-			messageHasGoalId(message, activeGoalId)
+			message.customType === expectedCustomType &&
+			messageHasGoalId(message, expectedGoalId)
 		);
 	});
 }
@@ -35,7 +46,7 @@ export function shouldResumeGoalAfterCompaction(
 	event: CompactionResumeEvent,
 	ctx: RuntimeIdleContext,
 ): goal is GoalState {
-	if (!isActiveGoal(goal)) return false;
+	if (!canAutoResumeGoal(goal)) return false;
 	if (event.willRetry) return false;
 	if (ctx.hasPendingMessages?.() === true) return false;
 
@@ -47,12 +58,20 @@ export function shouldResumeGoalAfterCompaction(
 	return isIdle === true;
 }
 
-function isActiveGoal(goal: GoalState | null): goal is GoalState {
-	return goal !== null && goal.status === "active";
+function resolveGoalContextCustomType(
+	goal: GoalState | null,
+): string | undefined {
+	if (goal === null) return undefined;
+	if (goal.status === "active") return GOAL_CONTEXT_CUSTOM_TYPE;
+	if (goal.status === "paused") return GOAL_PAUSED_CONTEXT_CUSTOM_TYPE;
+	return undefined;
 }
 
 function isGoalContextMessage(message: ContextMessage): boolean {
-	return message.customType === GOAL_CONTEXT_CUSTOM_TYPE;
+	return (
+		message.customType === GOAL_CONTEXT_CUSTOM_TYPE ||
+		message.customType === GOAL_PAUSED_CONTEXT_CUSTOM_TYPE
+	);
 }
 
 function messageHasGoalId(message: ContextMessage, goalId: string): boolean {

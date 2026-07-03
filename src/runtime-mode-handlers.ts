@@ -1,3 +1,4 @@
+import { isGoalActive } from "./goal-state-machine.js";
 import {
 	clearQueuedGoalContinuation,
 	queueGoalContinuation,
@@ -8,9 +9,11 @@ import { decideGoalNextAction } from "./next-action.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import {
 	GOAL_CONTEXT_CUSTOM_TYPE,
+	GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,
 	renderGoalCompactionSummary,
 	renderGoalContext,
 	renderGoalContinuationPrompt,
+	renderPausedGoalContext,
 } from "./prompts.js";
 import {
 	applyGoalAction,
@@ -59,8 +62,18 @@ export async function handleBeforeAgentStart(
 ): Promise<BeforeAgentStartResult | undefined> {
 	const { runtimePi, runtimeCtx, continuationGuard } = services;
 	const goal = loadGoalState(runtimeCtx);
-	if (!isActiveGoal(goal)) return undefined;
+	if (!goal) return undefined;
 	clearQueuedGoalContinuation(continuationGuard, goal.goalId);
+	if (!isGoalActive(goal)) {
+		return {
+			message: {
+				customType: GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,
+				content: renderPausedGoalContext(goal),
+				display: false,
+				details: { goalId: goal.goalId },
+			},
+		};
+	}
 	const current = goal.continuationPendingAt
 		? (saveGoalState(
 				runtimePi,
@@ -69,6 +82,9 @@ export async function handleBeforeAgentStart(
 					goalId: goal.goalId,
 					now: Date.now(),
 					pending: false,
+					source: "runtime",
+					explicitUserIntent: false,
+					causedBy: "before-agent-start:clear-pending-continuation",
 				},
 				goal,
 			) ?? goal)
@@ -98,7 +114,7 @@ export async function handleSessionBeforeCompact(
 	runtimeCtx: GoalRuntimeContext,
 ): Promise<SessionBeforeCompactResult | undefined> {
 	const goal = loadGoalState(runtimeCtx);
-	if (!isActiveGoal(goal)) return undefined;
+	if (!isGoalActive(goal)) return undefined;
 	const previous = event.preparation.previousSummary?.trim();
 	const summary = [
 		previous || "Conversation summary preserved by Pi.",
@@ -190,7 +206,7 @@ export async function handleAgentEndWithLock(
 ): Promise<void> {
 	const { runtimeCtx } = services;
 	const current = loadGoalState(runtimeCtx);
-	if (!isActiveGoal(current)) {
+	if (!isGoalActive(current)) {
 		applyGoalUi(runtimeCtx, current);
 		return;
 	}
@@ -212,7 +228,7 @@ async function handleAgentEnd(
 	try {
 		const usage = collectUsage(event.messages);
 		const latest = loadGoalState(runtimeCtx);
-		if (!isActiveGoal(latest)) return;
+		if (!isGoalActive(latest)) return;
 
 		const decision = await evaluateGoal(latest, runtimeCtx);
 		const reason =
@@ -228,6 +244,9 @@ async function handleAgentEnd(
 				now: Date.now(),
 				reason,
 				usage,
+				source: "runtime",
+				explicitUserIntent: false,
+				causedBy: "agent-end:evaluate-goal",
 			},
 			latest,
 		);
@@ -248,17 +267,11 @@ async function handleAgentEnd(
 			return;
 		}
 		applyGoalUi(runtimeCtx, evaluated);
-		if (!isActiveGoal(evaluated)) return;
+		if (!isGoalActive(evaluated)) return;
 
 		const action = decideGoalNextAction(evaluated, decision);
 		applyGoalAction(services, evaluated, action);
 	} catch (error) {
 		handleEvaluatorError(runtimePi, runtimeCtx, continuationGuard, error);
 	}
-}
-
-function isActiveGoal(
-	goal: { status?: unknown } | null,
-): goal is { status: "active" } {
-	return goal !== null && goal.status === "active";
 }

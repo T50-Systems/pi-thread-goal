@@ -81,6 +81,9 @@ export function registerGoalTools(pi: ExtensionAPI): void {
           now: Date.now(),
           acceptanceCriteria: params.acceptance_criteria,
           sourcePaths: params.source_paths,
+          source: "model-tool",
+          explicitUserIntent: true,
+          causedBy: "create_goal",
         },
         current,
       );
@@ -111,7 +114,15 @@ export function registerGoalTools(pi: ExtensionAPI): void {
       }
       const next = saveGoalState(
         pi,
-        { action: "complete", goalId: current.goalId, now: Date.now(), evidence: params.evidence },
+        {
+          action: "complete",
+          goalId: current.goalId,
+          now: Date.now(),
+          evidence: params.evidence,
+          source: "model-tool",
+          explicitUserIntent: false,
+          causedBy: "complete_goal",
+        },
         current,
       );
       return {
@@ -142,6 +153,9 @@ export function registerGoalTools(pi: ExtensionAPI): void {
           goalId: current.goalId,
           now: Date.now(),
           progress: normalizeProgressInput(params),
+          source: "model-tool",
+          explicitUserIntent: false,
+          causedBy: "update_goal_progress",
         },
         current,
       );

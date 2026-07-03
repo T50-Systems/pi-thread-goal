@@ -46,6 +46,37 @@ describe("filterGoalContextMessages", () => {
 		expect(filtered[1]?.content).toBe("new");
 	});
 
+	it("keeps only paused context and drops stale active context for a paused goal", () => {
+		const pausedGoal: GoalState = {
+			...goal,
+			status: "paused",
+			pauseReason: "manual",
+		};
+		const messages = [
+			{
+				customType: "thread-goal-context",
+				details: { goalId: "g1" },
+				content: "stale active",
+			},
+			{ customType: "other", content: "keep" },
+			{
+				customType: "thread-goal-paused-context",
+				details: { goalId: "g1" },
+				content: "old paused",
+			},
+			{
+				customType: "thread-goal-paused-context",
+				details: { goalId: "g1" },
+				content: "new paused",
+			},
+		];
+
+		const filtered = filterGoalContextMessages(messages, pausedGoal);
+		expect(filtered).toHaveLength(2);
+		expect(filtered[0]?.content).toBe("keep");
+		expect(filtered[1]?.content).toBe("new paused");
+	});
+
 	it("drops goal contexts when no active goal exists", () => {
 		const messages = [
 			{
