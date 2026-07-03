@@ -1,25 +1,12 @@
-import { randomUUID } from "node:crypto";
-
 import {
 	parseGoalEditDocument,
 	parseTokenBudgetValue,
 	renderGoalEditDocument,
 } from "./goal-edit-document.js";
+import { handleParsedGoalCommand, startGoal } from "./goal-command-handlers.js";
 export { parseGoalEditDocument, parseTokenBudgetValue, renderGoalEditDocument };
 export type { ParsedGoalEditDocument } from "./goal-edit-document.js";
-import { renderGoalStartPrompt } from "./prompts.js";
-import { loadGoalState, saveGoalState, validateObjective } from "./state.js";
-import {
-	GOAL_USAGE,
-	applyGoalUi,
-	noGoalMessage,
-	nonInteractiveConfirmationMessage,
-	renderGoalSummary,
-	setGoalWidgetExpanded,
-	showGoalOverlay,
-	toggleGoalWidgetExpanded,
-} from "./ui.js";
-import type { GoalState } from "./types.js";
+export { startGoal };
 
 export type GoalCommandKind =
 	| "show"
@@ -45,7 +32,7 @@ export interface ParsedGoalCommand {
 	tokenBudget?: number;
 }
 
-interface GoalCommandContext {
+export interface GoalCommandContext {
 	hasUI: boolean;
 	isIdle(): boolean;
 	waitForIdle(): Promise<void>;
@@ -74,7 +61,7 @@ interface GoalCommandContext {
 	};
 }
 
-interface GoalActionAPI {
+export interface GoalActionAPI {
 	appendEntry(customType: string, data?: unknown): unknown;
 	sendUserMessage(prompt: string, options?: { deliverAs: "followUp" }): unknown;
 }
@@ -179,255 +166,7 @@ export async function handleGoalCommand(
 	args: string,
 	ctx: GoalCommandContext,
 ): Promise<void> {
-	const parsed = parseGoalCommand(args);
-
-	if (parsed.kind === "show" || parsed.kind === "status") {
-		const current = loadGoalState(ctx);
-		if (!current) {
-			ctx.ui.notify(GOAL_USAGE, "info");
-			applyGoalUi(ctx, null);
-			return;
-		}
-		applyGoalUi(ctx, current);
-		if (ctx.hasUI && ctx.ui.custom) {
-			await showGoalOverlay(ctx, current);
-		} else {
-			ctx.ui.notify(renderGoalSummary(current), "info");
-		}
-		return;
-	}
-
-	if (
-		parsed.kind === "toggle" ||
-		parsed.kind === "expand" ||
-		parsed.kind === "collapse"
-	) {
-		const current = loadGoalState(ctx);
-		if (!current) {
-			ctx.ui.notify(noGoalMessage(parsed.kind), "warning");
-			applyGoalUi(ctx, null);
-			return;
-		}
-		let expanded: boolean;
-		if (parsed.kind === "toggle") {
-			expanded = toggleGoalWidgetExpanded();
-		} else if (parsed.kind === "expand") {
-			setGoalWidgetExpanded(true);
-			expanded = true;
-		} else {
-			setGoalWidgetExpanded(false);
-			expanded = false;
-		}
-		applyGoalUi(ctx, current);
-		ctx.ui.notify(
-			`Goal widget ${expanded ? "expanded" : "collapsed"}.`,
-			"info",
-		);
-		return;
-	}
-
-	await ctx.waitForIdle();
-	const current = loadGoalState(ctx);
-
-	switch (parsed.kind) {
-		case "create":
-			await createOrReplaceGoal(pi, ctx, parsed, current);
-			return;
-		case "edit":
-			await editGoal(pi, ctx, current);
-			return;
-		case "pause": {
-			if (!current) {
-				ctx.ui.notify(noGoalMessage("pause"), "error");
-				return;
-			}
-			const next = saveGoalState(
-				pi,
-				{ action: "pause", goalId: current.goalId, now: Date.now() },
-				current,
-			);
-			applyGoalUi(ctx, next);
-			ctx.ui.notify("Goal paused.", "info");
-			return;
-		}
-		case "resume": {
-			if (!current) {
-				ctx.ui.notify(noGoalMessage("resume"), "error");
-				return;
-			}
-			const next = saveGoalState(
-				pi,
-				{ action: "resume", goalId: current.goalId, now: Date.now() },
-				current,
-			);
-			applyGoalUi(ctx, next);
-			ctx.ui.notify("Goal resumed.", "info");
-			if (next && parsed.start) {
-				startGoal(pi, ctx, next);
-			}
-			return;
-		}
-		case "start": {
-			if (!current) {
-				ctx.ui.notify(noGoalMessage("start"), "error");
-				return;
-			}
-			startGoal(pi, ctx, current);
-			return;
-		}
-		case "clear": {
-			if (!current) {
-				ctx.ui.notify(noGoalMessage("clear"), "warning");
-				return;
-			}
-			const ok = await confirmAction(
-				ctx,
-				parsed.confirmed,
-				"Clear goal?",
-				"/goal clear",
-			);
-			if (!ok) return;
-			const next = saveGoalState(
-				pi,
-				{ action: "clear", goalId: current.goalId, now: Date.now() },
-				current,
-			);
-			applyGoalUi(ctx, next);
-			ctx.ui.notify("Goal cleared.", "info");
-			return;
-		}
-		case "complete": {
-			if (!current) {
-				ctx.ui.notify(noGoalMessage("complete"), "warning");
-				return;
-			}
-			const ok = await confirmAction(
-				ctx,
-				parsed.confirmed,
-				"Mark goal complete?",
-				"/goal complete",
-			);
-			if (!ok) return;
-			const next = saveGoalState(
-				pi,
-				{ action: "complete", goalId: current.goalId, now: Date.now() },
-				current,
-			);
-			applyGoalUi(ctx, next);
-			ctx.ui.notify("Goal marked complete.", "info");
-			return;
-		}
-		case "dismiss": {
-			if (!current) {
-				ctx.ui.notify(noGoalMessage("dismiss"), "warning");
-				return;
-			}
-			const next = saveGoalState(
-				pi,
-				{ action: "dismiss", goalId: current.goalId, now: Date.now() },
-				current,
-			);
-			applyGoalUi(ctx, next);
-			ctx.ui.notify("Goal widget dismissed.", "info");
-			return;
-		}
-		default:
-			return;
-	}
-}
-
-async function createOrReplaceGoal(
-	pi: GoalActionAPI,
-	ctx: GoalCommandContext,
-	parsed: ParsedGoalCommand,
-	current: GoalState | null,
-): Promise<void> {
-	const objective = validateObjective(parsed.objective ?? "");
-
-	if (current && !parsed.replace) {
-		if (!ctx.hasUI) {
-			ctx.ui.notify(
-				nonInteractiveConfirmationMessage("/goal <objective>"),
-				"error",
-			);
-			return;
-		}
-		const ok = await ctx.ui.confirm(
-			"Replace current goal?",
-			current.objective + "\n\nNew goal:\n" + objective,
-		);
-		if (!ok) {
-			ctx.ui.notify("Goal replacement cancelled.", "info");
-			return;
-		}
-	}
-
-	const event = current
-		? {
-				action: "replace" as const,
-				goalId: randomUUID(),
-				objective,
-				tokenBudget: parsed.tokenBudget,
-				now: Date.now(),
-			}
-		: {
-				action: "create" as const,
-				goalId: randomUUID(),
-				objective,
-				tokenBudget: parsed.tokenBudget,
-				now: Date.now(),
-			};
-
-	const next = saveGoalState(pi, event, current);
-	applyGoalUi(ctx, next);
-	ctx.ui.notify(current ? "Goal replaced." : "Goal created.", "info");
-	if (next) {
-		startGoal(pi, ctx, next);
-	}
-}
-
-async function editGoal(
-	pi: GoalActionAPI,
-	ctx: GoalCommandContext,
-	current: GoalState | null,
-): Promise<void> {
-	if (!current) {
-		ctx.ui.notify(noGoalMessage("edit"), "error");
-		return;
-	}
-	if (!ctx.hasUI) {
-		ctx.ui.notify(
-			"/goal edit requires interactive UI. Use /goal <objective> --replace instead.",
-			"error",
-		);
-		return;
-	}
-
-	const edited = await ctx.ui.editor(
-		"Edit goal",
-		renderGoalEditDocument(current),
-	);
-	if (edited === undefined) {
-		ctx.ui.notify("Goal edit cancelled.", "info");
-		return;
-	}
-
-	const parsed = parseGoalEditDocument(edited);
-	const next = saveGoalState(
-		pi,
-		{
-			action: "edit",
-			goalId: current.goalId,
-			objective: validateObjective(parsed.objective),
-			acceptanceCriteria: parsed.acceptanceCriteria,
-			sourcePaths: parsed.sourcePaths,
-			tokenBudget: parsed.tokenBudget,
-			now: Date.now(),
-		},
-		current,
-	);
-	applyGoalUi(ctx, next);
-	ctx.ui.notify("Goal updated.", "info");
+	return handleParsedGoalCommand(pi, parseGoalCommand(args), ctx);
 }
 
 function parseTokenBudgetFlag(tokens: string[]): number | undefined {
@@ -452,32 +191,4 @@ function stripTokenBudgetFlag(tokens: string[]): string[] {
 		result.push(token);
 	}
 	return result;
-}
-
-async function confirmAction(
-	ctx: GoalCommandContext,
-	alreadyConfirmed: boolean,
-	title: string,
-	command: string,
-): Promise<boolean> {
-	if (alreadyConfirmed) return true;
-	if (!ctx.hasUI) {
-		ctx.ui.notify(nonInteractiveConfirmationMessage(command), "error");
-		return false;
-	}
-	return ctx.ui.confirm(title, "This action changes the current goal state.");
-}
-
-export function startGoal(
-	pi: GoalActionAPI,
-	ctx: Pick<GoalCommandContext, "isIdle" | "ui">,
-	goal: GoalState,
-): void {
-	const prompt = renderGoalStartPrompt(goal);
-	if (ctx.isIdle()) {
-		pi.sendUserMessage(prompt);
-	} else {
-		pi.sendUserMessage(prompt, { deliverAs: "followUp" });
-	}
-	ctx.ui.notify("Goal turn started.", "info");
 }

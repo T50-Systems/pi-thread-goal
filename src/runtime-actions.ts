@@ -1,3 +1,4 @@
+import { isGoalActive } from "./goal-state-machine.js";
 import {
 	clearQueuedGoalContinuation,
 	type createContinuationGuard,
@@ -35,6 +36,9 @@ export function applyGoalAction(
 					goalId: goal.goalId,
 					now: Date.now(),
 					evidence: action.reason,
+					source: "runtime",
+					explicitUserIntent: false,
+					causedBy: "goal-next-action:complete",
 				},
 				goal,
 			);
@@ -106,6 +110,9 @@ export function pauseGoal(
 			now: Date.now(),
 			reason: options.reason,
 			message: options.message,
+			source: "runtime",
+			explicitUserIntent: false,
+			causedBy: `goal-next-action:${options.reason}`,
 		},
 		goal,
 	);
@@ -129,7 +136,7 @@ export function handleEvaluatorError(
 ): void {
 	const kind = classifyGoalRuntimeError(error);
 	const latest = loadGoalState(runtimeCtx);
-	if (!isActiveGoal(latest)) return;
+	if (!isGoalActive(latest)) return;
 
 	const message = error instanceof Error ? error.message : String(error);
 	if (kind === "retryable") {
@@ -184,8 +191,4 @@ export function ensureGoalStateInvariant(
 		return false;
 	}
 	return true;
-}
-
-function isActiveGoal(goal: GoalState | null): goal is GoalState {
-	return goal !== null && goal.status === "active";
 }

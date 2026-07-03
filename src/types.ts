@@ -44,7 +44,21 @@ export interface GoalState {
 	continuationReason?: string;
 }
 
-export interface GoalCreateEvent {
+export type GoalEventSource =
+	| "user-command"
+	| "model-tool"
+	| "runtime"
+	| "compaction"
+	| "session"
+	| "legacy-replay";
+
+export interface GoalEventMetadata {
+	source?: GoalEventSource;
+	explicitUserIntent?: boolean;
+	causedBy?: string;
+}
+
+export interface GoalCreateEvent extends GoalEventMetadata {
 	action: "create";
 	goalId: string;
 	objective: string;
@@ -58,7 +72,7 @@ export interface GoalReplaceEvent extends Omit<GoalCreateEvent, "action"> {
 	action: "replace";
 }
 
-export interface GoalEditEvent {
+export interface GoalEditEvent extends GoalEventMetadata {
 	action: "edit";
 	goalId: string;
 	now: number;
@@ -68,7 +82,7 @@ export interface GoalEditEvent {
 	tokenBudget?: number;
 }
 
-export interface GoalPauseEvent {
+export interface GoalPauseEvent extends GoalEventMetadata {
 	action: "pause";
 	goalId: string;
 	now: number;
@@ -76,39 +90,39 @@ export interface GoalPauseEvent {
 	message?: string;
 }
 
-export interface GoalResumeEvent {
+export interface GoalResumeEvent extends GoalEventMetadata {
 	action: "resume";
 	goalId: string;
 	now: number;
 }
 
-export interface GoalClearEvent {
+export interface GoalClearEvent extends GoalEventMetadata {
 	action: "clear";
 	goalId: string;
 	now: number;
 }
 
-export interface GoalCompleteEvent {
+export interface GoalCompleteEvent extends GoalEventMetadata {
 	action: "complete";
 	goalId: string;
 	now: number;
 	evidence?: string;
 }
 
-export interface GoalDismissEvent {
+export interface GoalDismissEvent extends GoalEventMetadata {
 	action: "dismiss";
 	goalId: string;
 	now: number;
 }
 
-export interface GoalProgressEvent {
+export interface GoalProgressEvent extends GoalEventMetadata {
 	action: "progress";
 	goalId: string;
 	now: number;
 	progress: Partial<GoalProgress>;
 }
 
-export interface GoalEvaluationEvent {
+export interface GoalEvaluationEvent extends GoalEventMetadata {
 	action: "evaluation";
 	goalId: string;
 	now: number;
@@ -116,7 +130,7 @@ export interface GoalEvaluationEvent {
 	usage?: Partial<GoalUsage>;
 }
 
-export interface GoalContinuationEvent {
+export interface GoalContinuationEvent extends GoalEventMetadata {
 	action: "continuation";
 	goalId: string;
 	now: number;
@@ -147,7 +161,6 @@ export interface GoalStateSnapshot {
 	current: GoalState | null;
 	entries: GoalStateEntry[];
 }
-
 
 export interface EvaluatorDecision {
 	met: boolean;

@@ -1,3 +1,7 @@
+import {
+	canAutoResumeGoal,
+	canQueueGoalContinuation,
+} from "./goal-state-machine.js";
 import type { GoalState } from "./types.js";
 import type { RuntimeIdleContext, SessionStartEvent } from "./runtime-types.js";
 import type {
@@ -22,7 +26,6 @@ export function createContinuationGuard(): ContinuationGuardState {
 	return { queuedGoalId: null };
 }
 
-
 export function shouldResumeGoalAfterSessionStart(
 	goal: GoalState | null,
 	event: SessionStartEvent,
@@ -31,7 +34,7 @@ export function shouldResumeGoalAfterSessionStart(
 ): goal is GoalState {
 	return (
 		event.reason === "resume" &&
-		isActiveGoal(goal) &&
+		canAutoResumeGoal(goal) &&
 		ctx.isIdle?.() === true &&
 		ctx.hasPendingMessages?.() !== true &&
 		guard.queuedGoalId !== goal.goalId
@@ -44,7 +47,7 @@ export function shouldRetryPendingContinuation(
 	now = Date.now(),
 ): goal is GoalState {
 	return (
-		isActiveGoal(goal) &&
+		canQueueGoalContinuation(goal) &&
 		typeof goal.continuationPendingAt === "number" &&
 		now - goal.continuationPendingAt >= CONTINUATION_WATCHDOG_MS &&
 		ctx.isIdle?.() === true &&
@@ -56,7 +59,7 @@ export function shouldQueueGoalContinuation(
 	guard: ContinuationGuardState,
 	goal: GoalState,
 ): boolean {
-	if (!isActiveGoal(goal)) return false;
+	if (!canQueueGoalContinuation(goal)) return false;
 	if (guard.queuedGoalId === goal.goalId) return false;
 	guard.queuedGoalId = goal.goalId;
 	return true;
@@ -123,8 +126,4 @@ export function queueGoalContinuation(
 	}
 	if (notification) ports.notifier?.notify?.(notification, "info");
 	return true;
-}
-
-function isActiveGoal(goal: GoalState | null): goal is GoalState {
-	return goal !== null && goal.status === "active";
 }

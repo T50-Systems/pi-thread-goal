@@ -17,6 +17,9 @@ export function createPiContinuationStore(
 					now: Date.now(),
 					pending: true,
 					reason,
+					source: "runtime",
+					explicitUserIntent: false,
+					causedBy: "queue-goal-continuation",
 				},
 				goal,
 			);

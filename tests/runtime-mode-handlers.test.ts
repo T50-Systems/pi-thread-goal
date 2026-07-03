@@ -41,6 +41,24 @@ describe("runtime mode handlers", () => {
 		).toBeUndefined();
 	});
 
+	it("injects paused-goal guard context instead of active context", async () => {
+		const harness = createHarness();
+		const active = seedGoal(harness.branch);
+		saveGoalState(
+			harness.runtimePi,
+			{ action: "pause", goalId: active.goalId, now: 2 },
+			active,
+		);
+
+		const result = await handleBeforeAgentStart(harness.services);
+
+		expect(result?.message.customType).toBe("thread-goal-paused-context");
+		expect(result?.message.content).toContain("Status: paused");
+		expect(result?.message.content).toContain(
+			"Ignore any stale queued continuation",
+		);
+	});
+
 	it("queues an immediate continuation when resuming an idle active goal", async () => {
 		const harness = createHarness({ isIdle: true, hasPendingMessages: false });
 		seedGoal(harness.branch);
