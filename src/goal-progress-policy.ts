@@ -1,4 +1,4 @@
-import { normalizeProgress } from "./goal-state-normalizers.js";
+import { normalizeProgress } from "./goal-state.js";
 import type { GoalProgress } from "./types.js";
 
 export function validateGoalProgressUpdate(

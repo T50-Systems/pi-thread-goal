@@ -1,4 +1,4 @@
-import { isGoalActive } from "./goal-state-machine.js";
+import { isGoalActive } from "./goal-state.js";
 import {
 	clearQueuedGoalContinuation,
 	queueGoalContinuation,
@@ -29,7 +29,7 @@ import {
 	filterGoalContextMessages,
 	shouldResumeGoalAfterCompaction,
 } from "./runtime-guards.js";
-import { loadGoalState } from "./state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { applyGoalUi } from "./ui.js";
 import { collectUsage } from "./usage-collector.js";

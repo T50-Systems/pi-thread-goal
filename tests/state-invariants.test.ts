@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateGoalStateInvariant } from "../src/state-invariants.js";
+import { validateGoalStateInvariant } from "../src/goal-state.js";
 import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {

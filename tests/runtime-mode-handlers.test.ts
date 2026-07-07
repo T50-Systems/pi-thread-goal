@@ -10,7 +10,7 @@ import {
 	loadGoalState,
 	saveGoalState,
 	type GoalSessionEntry,
-} from "../src/state.js";
+} from "../src/goal-state-persistence.js";
 import type { GoalRuntimeServices } from "../src/runtime-actions.js";
 import type {
 	GoalRuntimeContext,

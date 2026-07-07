@@ -1,5 +1,5 @@
 import { saveGoalOperation } from "./goal-operation-workflow.js";
-import { validateGoalStateInvariant } from "./state-invariants.js";
+import { validateGoalStateInvariant } from "./goal-state.js";
 import type {
 	GoalRuntimeContext,
 	RuntimeExtensionAPI,

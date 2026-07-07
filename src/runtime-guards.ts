@@ -1,4 +1,4 @@
-import { canAutoResumeGoal } from "./goal-state-machine.js";
+import { canAutoResumeGoal } from "./goal-state.js";
 import {
 	GOAL_CONTEXT_CUSTOM_TYPE,
 	GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,

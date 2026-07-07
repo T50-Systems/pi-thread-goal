@@ -10,7 +10,8 @@ import {
 	createPiNotifier,
 } from "./pi-continuation-ports.js";
 import { renderGoalStartPrompt } from "./prompts.js";
-import { loadGoalState, validateObjective } from "./state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
+import { validateObjective } from "./goal-state.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
 import {
 	GOAL_USAGE,
