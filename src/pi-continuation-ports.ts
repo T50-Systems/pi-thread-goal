@@ -8,7 +8,7 @@ import type {
 	GoalStateStore,
 	GoalMessageQueue,
 	GoalNotifier,
-} from "./goal-runtime-ports.js";
+} from "./continuation.js";
 import type {
 	GoalContinuationMode,
 	GoalContinuationPhase,
