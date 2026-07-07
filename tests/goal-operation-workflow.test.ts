@@ -8,14 +8,14 @@ import {
 } from "../src/goal-protocol-policy.js";
 import { resetGoalProtocolEpoch } from "../src/goal-protocol-tokens.js";
 import { executeGoalOperation } from "../src/goal-operation-workflow.js";
-import { reduceGoalState } from "../src/state.js";
+import { reduceGoalState } from "../src/goal-state.js";
 
 const SRC_DIR = join(dirname(fileURLToPath(import.meta.url)), "../src");
 
 describe("goal operation workflow adoption", () => {
 	it("keeps direct saveGoalState usage inside the legacy store only", () => {
 		const offenders = readdirSync(SRC_DIR)
-			.filter((file) => file.endsWith(".ts") && file !== "goal-state-store.ts")
+			.filter((file) => file.endsWith(".ts") && file !== "goal-state-persistence.ts")
 			.flatMap((file) => {
 				const path = join(SRC_DIR, file);
 				const text = readFileSync(path, "utf8");

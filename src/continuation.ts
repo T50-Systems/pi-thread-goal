@@ -1,7 +1,7 @@
 import {
 	canAutoResumeGoal,
 	canQueueGoalContinuation,
-} from "./goal-state-machine.js";
+} from "./goal-state.js";
 import type { GoalContinuationPhase, GoalState } from "./types.js";
 import type { RuntimeIdleContext, SessionStartEvent } from "./runtime-types.js";
 import type {

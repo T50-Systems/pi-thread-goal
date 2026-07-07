@@ -1,4 +1,4 @@
-import { isGoalActive } from "./goal-state-machine.js";
+import { isGoalActive } from "./goal-state.js";
 import {
 	clearQueuedGoalContinuation,
 	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
@@ -14,9 +14,9 @@ import {
 } from "./next-action.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import { renderGoalContinuationPrompt } from "./prompts.js";
-import { loadGoalState } from "./state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
-import { validateGoalStateInvariant } from "./state-invariants.js";
+import { validateGoalStateInvariant } from "./goal-state.js";
 import { applyGoalUi } from "./ui.js";
 import type { GoalProtocolContext } from "./goal-protocol-context.js";
 import type { GoalState } from "./types.js";

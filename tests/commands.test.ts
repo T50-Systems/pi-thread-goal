@@ -6,7 +6,7 @@ import {
 	parseTokenBudgetValue,
 	renderGoalEditDocument,
 } from "../src/commands.js";
-import { GOAL_CUSTOM_TYPE } from "../src/state.js";
+import { GOAL_CUSTOM_TYPE } from "../src/goal-state-persistence.js";
 
 describe("parseGoalCommand", () => {
 	it("shows when empty", () => {

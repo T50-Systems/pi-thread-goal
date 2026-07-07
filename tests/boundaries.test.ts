@@ -69,15 +69,6 @@ describe("source boundaries", () => {
 		expect(source).not.toMatch(/evaluateGoal/);
 	});
 
-	it("keeps state.ts as a compatibility facade", () => {
-		const source = readSource("src/state.ts");
-		expect(source).toMatch(/from "\.\/goal-state-reducer\.js"/);
-		expect(source).toMatch(/from "\.\/goal-state-snapshot\.js"/);
-		expect(source).toMatch(/from "\.\/goal-state-store\.js"/);
-		expect(source).not.toMatch(/function reduceGoalState/);
-		expect(source).not.toMatch(/function createGoalStateSnapshot/);
-	});
-
 	it("keeps continuation application logic free of Pi persistence/message adapters", () => {
 		const source = readSource("src/continuation.ts");
 		expect(source).not.toMatch(/saveGoalState/);

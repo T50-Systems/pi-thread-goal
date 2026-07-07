@@ -6,7 +6,8 @@ import { registerGoalTools } from "./tools.js";
 export { parseGoalCommand, handleGoalCommand, startGoal } from "./commands.js";
 export { registerGoalRuntime, filterGoalContextMessages } from "./runtime.js";
 export { registerGoalTools } from "./tools.js";
-export { GOAL_CUSTOM_TYPE, createGoalStateSnapshot, loadGoalState, reduceGoalState, saveGoalState } from "./state.js";
+export { GOAL_CUSTOM_TYPE, createGoalStateSnapshot, loadGoalState, saveGoalState } from "./goal-state-persistence.js";
+export { reduceGoalState } from "./goal-state.js";
 export {
   GOAL_CONTEXT_CUSTOM_TYPE,
   renderGoalContext,

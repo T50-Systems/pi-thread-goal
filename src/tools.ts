@@ -11,7 +11,8 @@ import {
 	observeGoal,
 	prepareGoalCompletion,
 } from "./goal-protocol-policy.js";
-import { loadGoalState, validateObjective } from "./state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
+import { validateObjective } from "./goal-state.js";
 import type { GoalProgress, GoalState } from "./types.js";
 import type { GoalProtocolDecision } from "./goal-protocol-types.js";
 import type { GoalProtocolContextSource } from "./goal-protocol-context.js";
