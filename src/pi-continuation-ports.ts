@@ -1,14 +1,14 @@
+import type {
+	GoalMessageQueue,
+	GoalNotifier,
+	GoalStateStore,
+} from "./continuation.js";
 import { saveGoalOperation } from "./goal-operations.js";
 import { validateGoalStateInvariant } from "./goal-state.js";
 import type {
 	GoalRuntimeContext,
 	RuntimeExtensionAPI,
 } from "./runtime-types.js";
-import type {
-	GoalStateStore,
-	GoalMessageQueue,
-	GoalNotifier,
-} from "./continuation.js";
 import type {
 	GoalContinuationMode,
 	GoalContinuationPhase,

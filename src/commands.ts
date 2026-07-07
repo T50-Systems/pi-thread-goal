@@ -4,27 +4,27 @@ import {
 	createContinuationGuard,
 	queueGoalContinuation,
 } from "./continuation.js";
+import { saveGoalOperation } from "./goal-operations.js";
+import { validateObjective } from "./goal-state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
 import {
 	createPiContinuationStore,
 	createPiMessageQueue,
 	createPiNotifier,
 } from "./pi-continuation-ports.js";
 import { renderGoalStartPrompt } from "./prompts.js";
-import { loadGoalState } from "./goal-state-persistence.js";
-import { validateObjective } from "./goal-state.js";
-import { saveGoalOperation } from "./goal-operations.js";
+import type { GoalState } from "./types.js";
 import {
-	GOAL_USAGE,
 	applyGoalUi,
+	GOAL_USAGE,
 	noGoalMessage,
 	nonInteractiveConfirmationMessage,
-	renderGoalSummary,
 	renderGoalDoctor,
+	renderGoalSummary,
 	setGoalWidgetExpanded,
 	showGoalOverlay,
 	toggleGoalWidgetExpanded,
 } from "./ui.js";
-import type { GoalState } from "./types.js";
 
 // --- Goal edit document (pure parsing/rendering) ---
 
@@ -452,7 +452,7 @@ async function createOrReplaceGoal(
 		}
 		const ok = await ctx.ui.confirm(
 			"Replace current goal?",
-			current.objective + "\n\nNew goal:\n" + objective,
+			`${current.objective}\n\nNew goal:\n${objective}`,
 		);
 		if (!ok) {
 			ctx.ui.notify("Goal replacement cancelled.", "info");

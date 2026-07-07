@@ -1,10 +1,10 @@
 import { renderGoalEvaluationPrompt } from "./prompts.js";
+import type { GoalRuntimeContext } from "./runtime-types.js";
 import type {
 	EvaluatorDecision,
 	GoalRuntimeInterruptionKind,
 	GoalState,
 } from "./types.js";
-import type { GoalRuntimeContext } from "./runtime-types.js";
 
 // --- Evaluator ports ---
 

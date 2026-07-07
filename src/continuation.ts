@@ -1,13 +1,10 @@
-import {
-	canAutoResumeGoal,
-	canQueueGoalContinuation,
-} from "./goal-state.js";
+import { canAutoResumeGoal, canQueueGoalContinuation } from "./goal-state.js";
+import type { RuntimeIdleContext, SessionStartEvent } from "./runtime-types.js";
 import type {
 	GoalContinuationMode,
 	GoalContinuationPhase,
 	GoalState,
 } from "./types.js";
-import type { RuntimeIdleContext, SessionStartEvent } from "./runtime-types.js";
 
 export interface GoalStateStore {
 	markPending(
@@ -39,8 +36,6 @@ export interface GoalRuntimeIdleProbe {
 	isIdle?: () => boolean;
 	hasPendingMessages?: () => boolean;
 }
-
-
 
 export interface ContinuationGuardState {
 	queuedGoalId: string | null;

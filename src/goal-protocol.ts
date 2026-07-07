@@ -128,7 +128,6 @@ export function protocolStateForGoal(
 
 import { createHash, randomUUID } from "node:crypto";
 
-
 export const GOAL_PROTOCOL_CAPABILITY_TTL_MS = 5 * 60_000;
 export const GOAL_PROTOCOL_TOKEN_TTL_MS = GOAL_PROTOCOL_CAPABILITY_TTL_MS;
 
@@ -253,7 +252,6 @@ export const invalidateGoalProtocolTokens = invalidateGoalProtocolCapabilities;
 export function hashEvidence(evidence: string): string {
 	return createHash("sha256").update(evidence).digest("hex");
 }
-
 
 export interface GoalProtocolGuardFailure {
 	code: GoalProtocolDenyCode;

@@ -1,17 +1,16 @@
-import { isGoalActive } from "./goal-state.js";
-import { canAutoResumeGoal } from "./goal-state.js";
-import type { GoalState } from "./types.js";
-import type { ContextMessage, RuntimeIdleContext } from "./runtime-types.js";
 import {
 	clearQueuedGoalContinuation,
 	queueGoalContinuation,
 	shouldResumeGoalAfterSessionStart,
 } from "./continuation.js";
 import { evaluateGoal } from "./evaluator.js";
-import { decideGoalNextAction } from "./policies.js";
+import { saveGoalOperation } from "./goal-operations.js";
+import type { GoalProtocolCapabilitySummary } from "./goal-protocol.js";
+import { observeGoal, resetGoalProtocolEpoch } from "./goal-protocol.js";
+import { canAutoResumeGoal, isGoalActive } from "./goal-state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
-import { observeGoal } from "./goal-protocol.js";
-import { resetGoalProtocolEpoch } from "./goal-protocol.js";
+import { decideGoalNextAction } from "./policies.js";
 import {
 	GOAL_CONTEXT_CUSTOM_TYPE,
 	GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,
@@ -23,24 +22,24 @@ import {
 import {
 	applyGoalAction,
 	ensureGoalStateInvariant,
+	type GoalRuntimeServices,
 	handleEvaluatorError,
 	pauseGoal,
 	retryPendingContinuation,
-	type GoalRuntimeServices,
 } from "./runtime-actions.js";
-import { loadGoalState } from "./goal-state-persistence.js";
-import { saveGoalOperation } from "./goal-operations.js";
-import { applyGoalUi } from "./ui.js";
-import { collectUsage } from "./usage-collector.js";
-import type { GoalProtocolCapabilitySummary } from "./goal-protocol.js";
 import type {
 	AgentEndEvent,
+	CompactionResumeEvent,
 	ContextEvent,
+	ContextMessage,
 	GoalRuntimeContext,
+	RuntimeIdleContext,
 	SessionBeforeCompactEvent,
 	SessionStartEvent,
-	CompactionResumeEvent,
 } from "./runtime-types.js";
+import type { GoalState } from "./types.js";
+import { applyGoalUi } from "./ui.js";
+import { collectUsage } from "./usage-collector.js";
 
 type BeforeAgentStartResult = {
 	message: {
