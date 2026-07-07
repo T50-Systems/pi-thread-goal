@@ -1,3 +1,6 @@
+import { invalidateGoalProtocolCapabilities } from "./goal-protocol.js";
+import { reduceGoalState } from "./goal-state.js";
+import { cloneGoalState, GOAL_CUSTOM_TYPE } from "./goal-state-persistence.js";
 import type {
 	GoalEvent,
 	GoalEventSource,
@@ -95,42 +98,6 @@ export function buildGoalOperationContract(
 		case "continuation":
 			return { ...base, beforeStatus: "active", afterStatus: "active" };
 	}
-}
-
-export function buildResumeGoalContract(
-	event: Extract<GoalEvent, { action: "resume" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildPauseGoalContract(
-	event: Extract<GoalEvent, { action: "pause" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildCompleteGoalContract(
-	event: Extract<GoalEvent, { action: "complete" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildProgressGoalContract(
-	event: Extract<GoalEvent, { action: "progress" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildContinuationGoalContract(
-	event: Extract<GoalEvent, { action: "continuation" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildEvaluationGoalContract(
-	event: Extract<GoalEvent, { action: "evaluation" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
 }
 
 export function verifyGoalOperationContract(input: {
@@ -281,10 +248,6 @@ function verifyRevision(
 	}
 }
 
-import { invalidateGoalProtocolCapabilities } from "./goal-protocol.js";
-import { reduceGoalStateMachine } from "./goal-state.js";
-import { cloneGoalState, GOAL_CUSTOM_TYPE } from "./goal-state-persistence.js";
-
 export interface GoalOperationAppendAPI {
 	appendEntry(customType: string, data?: unknown): unknown;
 }
@@ -304,7 +267,7 @@ export function executeGoalOperation(input: {
 	contract?: GoalOperationContract;
 }): GoalOperationResult {
 	const contract = input.contract ?? buildGoalOperationContract(input.event);
-	const after = reduceGoalStateMachine(input.before, input.event);
+	const after = reduceGoalState(input.before, input.event);
 	const result = verifyGoalOperationContract({
 		contract,
 		before: input.before,
