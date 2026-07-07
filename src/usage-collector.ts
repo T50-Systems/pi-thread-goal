@@ -1,4 +1,4 @@
-import type { GoalUsage } from "./types.js";
+import { type GoalUsage, isRecord } from "./types.js";
 
 export function collectUsage(messages: unknown[]): Partial<GoalUsage> {
 	const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 };
@@ -27,8 +27,4 @@ function isAssistantUsageMessage(
 function numericField(record: Record<string, unknown>, key: string): number {
 	const value = record[key];
 	return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
 }

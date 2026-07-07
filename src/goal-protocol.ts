@@ -1,3 +1,7 @@
+import { createHash, randomUUID } from "node:crypto";
+import { validateGoalCompletion } from "./policies.js";
+import type { GoalState, GoalStatus } from "./types.js";
+
 export interface GoalProtocolContext {
 	sessionId: string;
 	branchId: string;
@@ -34,8 +38,6 @@ export function requireGoalProtocolContext(
 	}
 	return protocol;
 }
-
-import type { GoalState, GoalStatus } from "./types.js";
 
 export type GoalProtocolState =
 	| "unknown"
@@ -125,8 +127,6 @@ export function protocolStateForGoal(
 	if (goal.status === "paused") return "observed-paused";
 	return "observed-complete";
 }
-
-import { createHash, randomUUID } from "node:crypto";
 
 export const GOAL_PROTOCOL_CAPABILITY_TTL_MS = 5 * 60_000;
 export const GOAL_PROTOCOL_TOKEN_TTL_MS = GOAL_PROTOCOL_CAPABILITY_TTL_MS;
@@ -397,8 +397,6 @@ function capabilityMatchesGoal(
 		record.expiresAt > now
 	);
 }
-
-import { validateGoalCompletion } from "./policies.js";
 
 export function observeGoal(input: {
 	context: GoalProtocolContext;

@@ -266,7 +266,7 @@ export function validateGoalStateInvariant(
 	return { ok: true };
 }
 
-export function reduceGoalStateMachine(
+export function reduceGoalState(
 	current: GoalState | null,
 	event: GoalEvent,
 	intent: GoalTransitionIntent = {},
@@ -457,5 +457,3 @@ function reduceContinuationState(
 function nextRevision(current: GoalState): number {
 	return current.revision + 1;
 }
-
-export { reduceGoalStateMachine as reduceGoalState };

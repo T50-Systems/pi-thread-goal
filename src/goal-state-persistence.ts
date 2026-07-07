@@ -1,10 +1,11 @@
 import { reduceGoalState } from "./goal-state.js";
-import type {
-	GoalEvent,
-	GoalProgress,
-	GoalState,
-	GoalStateEntry,
-	GoalStateSnapshot,
+import {
+	type GoalEvent,
+	type GoalProgress,
+	type GoalState,
+	type GoalStateEntry,
+	type GoalStateSnapshot,
+	isRecord,
 } from "./types.js";
 
 export const GOAL_CUSTOM_TYPE = "thread-goal-state";
@@ -322,10 +323,6 @@ function optionalEventSource(value: unknown) {
 
 function isGoalStatus(value: unknown): value is GoalState["status"] {
 	return value === "active" || value === "paused" || value === "complete";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
 }
 
 export interface GoalSessionContext {

@@ -1,3 +1,11 @@
+import {
+	getContinuationRetryDelayMs,
+	hasReachedContinuationDeliveryLimit,
+	hasStalePendingContinuation,
+	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
+} from "./continuation.js";
+import type { GoalState } from "./types.js";
+
 export function visibleWidth(value: string): number {
 	return stripAnsi(value).length;
 }
@@ -91,14 +99,6 @@ function formatCompactNumber(value: number): string {
 	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
 	return String(value);
 }
-
-import {
-	getContinuationRetryDelayMs,
-	hasReachedContinuationDeliveryLimit,
-	hasStalePendingContinuation,
-	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
-} from "./continuation.js";
-import type { GoalState } from "./types.js";
 
 let goalWidgetExpanded = false;
 const GOAL_WIDGET_BG = "\x1b[48;5;236m";

@@ -37,7 +37,7 @@ import type {
 	SessionBeforeCompactEvent,
 	SessionStartEvent,
 } from "./runtime-types.js";
-import type { GoalState } from "./types.js";
+import { type GoalState, isRecord } from "./types.js";
 import { applyGoalUi } from "./ui.js";
 import { collectUsage } from "./usage-collector.js";
 
@@ -379,8 +379,4 @@ function isGoalContextMessage(message: ContextMessage): boolean {
 function messageHasGoalId(message: ContextMessage, goalId: string): boolean {
 	const details = message.details;
 	return isRecord(details) && details.goalId === goalId;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
 }
