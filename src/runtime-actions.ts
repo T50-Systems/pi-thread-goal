@@ -15,7 +15,7 @@ import {
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import { renderGoalContinuationPrompt } from "./prompts.js";
 import { loadGoalState } from "./goal-state-persistence.js";
-import { saveGoalOperation } from "./goal-operation-workflow.js";
+import { saveGoalOperation } from "./goal-operations.js";
 import { validateGoalStateInvariant } from "./goal-state.js";
 import { applyGoalUi } from "./ui.js";
 import type { GoalProtocolContext } from "./goal-protocol.js";
