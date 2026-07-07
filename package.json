@@ -26,8 +26,6 @@
 	"files": [
 		"extensions",
 		"src",
-		"tests",
-		"docs",
 		"README.md",
 		"LICENSE"
 	],
