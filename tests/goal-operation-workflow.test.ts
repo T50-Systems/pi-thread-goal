@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
 	authorizeProgressUpdate,
 	observeGoal,
-} from "../src/goal-protocol-policy.js";
-import { resetGoalProtocolEpoch } from "../src/goal-protocol-tokens.js";
+} from "../src/goal-protocol.js";
+import { resetGoalProtocolEpoch } from "../src/goal-protocol.js";
 import { executeGoalOperation } from "../src/goal-operation-workflow.js";
 import { reduceGoalState } from "../src/goal-state.js";
 

@@ -2,7 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 import { validateGoalCompletion } from "./completion-policy.js";
-import { requireGoalProtocolContext } from "./goal-protocol-context.js";
+import { requireGoalProtocolContext } from "./goal-protocol.js";
 import { validateGoalProgressUpdate } from "./goal-progress-policy.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
 import {
@@ -10,12 +10,12 @@ import {
 	authorizeProgressUpdate,
 	observeGoal,
 	prepareGoalCompletion,
-} from "./goal-protocol-policy.js";
+} from "./goal-protocol.js";
 import { loadGoalState } from "./goal-state-persistence.js";
 import { validateObjective } from "./goal-state.js";
 import type { GoalProgress, GoalState } from "./types.js";
-import type { GoalProtocolDecision } from "./goal-protocol-types.js";
-import type { GoalProtocolContextSource } from "./goal-protocol-context.js";
+import type { GoalProtocolDecision } from "./goal-protocol.js";
+import type { GoalProtocolContextSource } from "./goal-protocol.js";
 
 export { validateGoalCompletion };
 

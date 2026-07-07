@@ -5,9 +5,9 @@ import {
 	authorizeProgressUpdate,
 	observeGoal,
 	prepareGoalCompletion,
-} from "../src/goal-protocol-policy.js";
-import { GoalProtocolCapabilityRegistry } from "../src/goal-protocol-tokens.js";
-import type { GoalProtocolContext } from "../src/goal-protocol-context.js";
+} from "../src/goal-protocol.js";
+import { GoalProtocolCapabilityRegistry } from "../src/goal-protocol.js";
+import type { GoalProtocolContext } from "../src/goal-protocol.js";
 import type { GoalState } from "../src/types.js";
 
 const contextA: GoalProtocolContext = {

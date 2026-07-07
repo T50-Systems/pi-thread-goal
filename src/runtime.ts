@@ -1,4 +1,4 @@
-import { requireGoalProtocolContext } from "./goal-protocol-context.js";
+import { requireGoalProtocolContext } from "./goal-protocol.js";
 import { createContinuationGuard } from "./continuation.js";
 import {
 	handleAgentEndWithLock,
