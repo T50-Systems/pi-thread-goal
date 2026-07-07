@@ -144,8 +144,10 @@ npm install
 Run checks:
 
 ```bash
+npm run lint
 npm run typecheck
 npm test
+npm run test:coverage
 ```
 
 ## Release scope for `v0.3.0`
