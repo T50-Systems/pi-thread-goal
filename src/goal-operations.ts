@@ -1,5 +1,10 @@
-import type { GoalEvent, GoalEventSource, GoalState, GoalStateEntry, GoalStatus } from "./types.js";
-
+import type {
+	GoalEvent,
+	GoalEventSource,
+	GoalState,
+	GoalStateEntry,
+	GoalStatus,
+} from "./types.js";
 
 export type GoalOperationName = GoalEvent["action"];
 export type GoalStatusRequirement = GoalStatus | "none" | "any";
@@ -276,10 +281,9 @@ function verifyRevision(
 	}
 }
 
-import { GOAL_CUSTOM_TYPE } from "./goal-state-persistence.js";
-import { cloneGoalState } from "./goal-state-persistence.js";
-import { reduceGoalStateMachine } from "./goal-state.js";
 import { invalidateGoalProtocolCapabilities } from "./goal-protocol.js";
+import { reduceGoalStateMachine } from "./goal-state.js";
+import { cloneGoalState, GOAL_CUSTOM_TYPE } from "./goal-state-persistence.js";
 
 export interface GoalOperationAppendAPI {
 	appendEntry(customType: string, data?: unknown): unknown;

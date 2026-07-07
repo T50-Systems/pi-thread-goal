@@ -1,4 +1,9 @@
-import type { GoalEvent, GoalEventMetadata, GoalProgress, GoalState } from "./types.js";
+import type {
+	GoalEvent,
+	GoalEventMetadata,
+	GoalProgress,
+	GoalState,
+} from "./types.js";
 
 export const MAX_OBJECTIVE_LENGTH = 4000;
 
@@ -91,7 +96,6 @@ export function mergeUsage(
 		total: current.total + Math.max(0, delta?.total ?? 0),
 	};
 }
-
 
 export interface GoalTransitionDecision {
 	allowed: boolean;
@@ -205,7 +209,6 @@ function reject(reason: string): GoalTransitionDecision {
 	return { allowed: false, reason };
 }
 
-
 export type GoalStateInvariantResult =
 	| { ok: true }
 	| { ok: false; reason: string };
@@ -262,7 +265,6 @@ export function validateGoalStateInvariant(
 	}
 	return { ok: true };
 }
-
 
 export function reduceGoalStateMachine(
 	current: GoalState | null,

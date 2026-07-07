@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { GoalState } from "../src/types.js";
 import {
 	applyGoalUi,
 	formatElapsedTime,
-	renderGoalOverlayLines,
 	renderContinuationStatus,
 	renderGoalDoctor,
+	renderGoalOverlayLines,
 	renderGoalStatusLine,
 	renderGoalWidget,
 	setGoalWidgetExpanded,
 	toggleGoalWidgetExpanded,
 } from "../src/ui.js";
-import type { GoalState } from "../src/types.js";
 
 const baseGoal: GoalState = {
 	version: 1,

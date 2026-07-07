@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-
+import type { GoalProtocolContext } from "../src/goal-protocol.js";
 import {
 	authorizeGoalCompletion,
 	authorizeProgressUpdate,
+	GoalProtocolCapabilityRegistry,
 	observeGoal,
 	prepareGoalCompletion,
 } from "../src/goal-protocol.js";
-import { GoalProtocolCapabilityRegistry } from "../src/goal-protocol.js";
-import type { GoalProtocolContext } from "../src/goal-protocol.js";
 import type { GoalState } from "../src/types.js";
 
 const contextA: GoalProtocolContext = {

@@ -1,7 +1,6 @@
 import { normalizeProgress } from "./goal-state.js";
 import type { EvaluatorDecision, GoalProgress, GoalState } from "./types.js";
 
-
 export function validateGoalCompletion(
 	goal: GoalState,
 	evidence: string | undefined,
@@ -64,7 +63,6 @@ function mentionsCompletionEvidence(evidence: string): boolean {
 	);
 }
 
-
 export function validateGoalProgressUpdate(
 	current: GoalProgress,
 	patch: Partial<GoalProgress>,
@@ -106,7 +104,6 @@ function sameList(left: string[], right: string[]): boolean {
 		left.every((value, index) => value === right[index])
 	);
 }
-
 
 export const MAX_AUTOMATIC_CONTINUATION_TURNS = 25;
 

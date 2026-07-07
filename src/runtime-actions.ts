@@ -1,29 +1,28 @@
-import { isGoalActive } from "./goal-state.js";
 import {
 	clearQueuedGoalContinuation,
-	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
 	type createContinuationGuard,
+	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
 	queueGoalContinuation,
 	shouldPauseForContinuationDeliveryFailure,
 	shouldRetryPendingContinuation,
 } from "./continuation.js";
 import { classifyGoalRuntimeError } from "./evaluator.js";
-import {
-	MAX_AUTOMATIC_CONTINUATION_TURNS,
-	type GoalNextAction,
-} from "./policies.js";
-import { createPiContinuationPorts } from "./pi-continuation-ports.js";
-import { renderGoalContinuationPrompt } from "./prompts.js";
-import { loadGoalState } from "./goal-state-persistence.js";
 import { saveGoalOperation } from "./goal-operations.js";
-import { validateGoalStateInvariant } from "./goal-state.js";
-import { applyGoalUi } from "./ui.js";
 import type { GoalProtocolContext } from "./goal-protocol.js";
-import type { GoalState } from "./types.js";
+import { isGoalActive, validateGoalStateInvariant } from "./goal-state.js";
+import { loadGoalState } from "./goal-state-persistence.js";
+import { createPiContinuationPorts } from "./pi-continuation-ports.js";
+import {
+	type GoalNextAction,
+	MAX_AUTOMATIC_CONTINUATION_TURNS,
+} from "./policies.js";
+import { renderGoalContinuationPrompt } from "./prompts.js";
 import type {
 	GoalRuntimeContext,
 	RuntimeExtensionAPI,
 } from "./runtime-types.js";
+import type { GoalState } from "./types.js";
+import { applyGoalUi } from "./ui.js";
 
 export interface GoalRuntimeServices {
 	runtimePi: RuntimeExtensionAPI;

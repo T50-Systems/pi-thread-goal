@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createGoalStateSnapshot } from "../src/goal-state-persistence.js";
 import { reduceGoalState } from "../src/goal-state.js";
+import { createGoalStateSnapshot } from "../src/goal-state-persistence.js";
 import type { GoalEvent } from "../src/types.js";
 
 function apply(events: GoalEvent[]) {

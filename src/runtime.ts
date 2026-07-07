@@ -1,5 +1,6 @@
-import { requireGoalProtocolContext } from "./goal-protocol.js";
 import { createContinuationGuard } from "./continuation.js";
+import { requireGoalProtocolContext } from "./goal-protocol.js";
+import type { GoalRuntimeServices } from "./runtime-actions.js";
 import {
 	handleAgentEndWithLock,
 	handleBeforeAgentStart,
@@ -9,11 +10,12 @@ import {
 	handleSessionStart,
 	handleSessionTree,
 } from "./runtime-mode-handlers.js";
-import type { GoalRuntimeServices } from "./runtime-actions.js";
+
 export {
 	filterGoalContextMessages,
 	shouldResumeGoalAfterCompaction,
 } from "./runtime-mode-handlers.js";
+
 import type {
 	GoalRuntimeContext,
 	RuntimeExtensionAPI,

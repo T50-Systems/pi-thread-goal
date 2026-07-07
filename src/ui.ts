@@ -1,4 +1,3 @@
-
 export function visibleWidth(value: string): number {
 	return stripAnsi(value).length;
 }
