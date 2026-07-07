@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GoalSessionEntry } from "../src/goal-state-persistence.js";
 import goalExtension, {
 	GOAL_CONTEXT_CUSTOM_TYPE,
 	loadGoalState,
@@ -21,7 +22,6 @@ vi.mock("@earendil-works/pi-ai/compat", () => ({
 	})),
 }));
 
-type BranchEntry = { type: string; customType?: string; data?: unknown };
 type RegisteredCommand = {
 	description: string;
 	handler: (args: string, ctx: unknown) => Promise<void>;
@@ -90,7 +90,7 @@ describe("goal extension E2E smoke", () => {
 });
 
 function createHarness() {
-	const branch: BranchEntry[] = [];
+	const branch: GoalSessionEntry[] = [];
 	const commands = new Map<string, RegisteredCommand>();
 	const handlers = new Map<string, HookHandler>();
 	const sentMessages: Array<{

@@ -6,7 +6,10 @@ import {
 	parseTokenBudgetValue,
 	renderGoalEditDocument,
 } from "../src/commands.js";
-import { GOAL_CUSTOM_TYPE } from "../src/goal-state-persistence.js";
+import {
+	GOAL_CUSTOM_TYPE,
+	type GoalSessionEntry,
+} from "../src/goal-state-persistence.js";
 
 describe("parseGoalCommand", () => {
 	it("shows when empty", () => {
@@ -112,10 +115,8 @@ describe("parseGoalCommand", () => {
 	});
 });
 
-type TestBranchEntry = { type: string; customType?: string; data?: unknown };
-
 function makePausedGoalHarness() {
-	const branch: TestBranchEntry[] = [
+	const branch: GoalSessionEntry[] = [
 		{
 			type: "custom",
 			customType: GOAL_CUSTOM_TYPE,

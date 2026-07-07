@@ -49,12 +49,35 @@ describe("source boundaries", () => {
 	});
 
 	it("keeps pure domain modules independent from adapters and runtime orchestration", () => {
-		const pureModules = [
-			"src/policies.ts",
-			"src/goal-state.ts",
-			"src/goal-protocol.ts",
-		];
-		for (const path of pureModules) {
+		// Modules that are allowed to touch adapters, Pi infrastructure, or
+		// runtime orchestration, and are covered by their own dedicated
+		// boundary tests elsewhere in this file (or are the composition
+		// root / Pi-facing registration surfaces). Everything else in src/
+		// is assumed to be pure domain logic and is checked automatically,
+		// so a new pure module cannot silently escape this check.
+		const adapterOrRuntimeModules = new Set([
+			"commands.ts",
+			"continuation.ts",
+			"evaluator.ts",
+			"goal-operations.ts",
+			"goal-state-persistence.ts",
+			"index.ts",
+			"pi-continuation-ports.ts",
+			"runtime-actions.ts",
+			"runtime-mode-handlers.ts",
+			"runtime-types.ts",
+			"runtime.ts",
+			"tools.ts",
+			"types.ts",
+			"ui.ts",
+		]);
+		const pureModules = readdirSync(srcDir)
+			.filter((entry) => entry.endsWith(".ts"))
+			.filter((entry) => !adapterOrRuntimeModules.has(entry));
+
+		expect(pureModules.length).toBeGreaterThan(0);
+		for (const entry of pureModules) {
+			const path = `src/${entry}`;
 			const source = readSource(path);
 			expect(source, path).not.toMatch(/adapter/i);
 			expect(source, path).not.toMatch(/from ["']\.\/runtime\.js["']/);
