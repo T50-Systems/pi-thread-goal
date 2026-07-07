@@ -11,7 +11,7 @@ import { classifyGoalRuntimeError } from "./evaluator.js";
 import {
 	MAX_AUTOMATIC_CONTINUATION_TURNS,
 	type GoalNextAction,
-} from "./next-action.js";
+} from "./policies.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import { renderGoalContinuationPrompt } from "./prompts.js";
 import { loadGoalState } from "./goal-state-persistence.js";

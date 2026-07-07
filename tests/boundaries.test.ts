@@ -43,17 +43,19 @@ describe("source boundaries", () => {
 		expect(matches).toEqual(["/src/evaluator.ts"]);
 	});
 
-	it("keeps next-action independent from tool-facing modules", () => {
-		const source = readSource("src/next-action.ts");
+	it("keeps policies independent from tool-facing modules", () => {
+		const source = readSource("src/policies.ts");
 		expect(source).not.toMatch(/from ["']\.\/tools\.js["']/);
 	});
 
-	it("keeps pure policy modules independent from adapters and runtime orchestration", () => {
-		const policyFiles = sourceFiles().filter((path) =>
-			path.endsWith("-policy.ts"),
-		);
-		for (const path of policyFiles) {
-			const source = readFileSync(path, "utf8");
+	it("keeps pure domain modules independent from adapters and runtime orchestration", () => {
+		const pureModules = [
+			"src/policies.ts",
+			"src/goal-state.ts",
+			"src/goal-protocol.ts",
+		];
+		for (const path of pureModules) {
+			const source = readSource(path);
 			expect(source, path).not.toMatch(/adapter/i);
 			expect(source, path).not.toMatch(/from ["']\.\/runtime\.js["']/);
 			expect(source, path).not.toMatch(/@earendil-works/);

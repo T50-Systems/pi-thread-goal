@@ -8,7 +8,7 @@ import {
 	shouldResumeGoalAfterSessionStart,
 } from "./continuation.js";
 import { evaluateGoal } from "./evaluator.js";
-import { decideGoalNextAction } from "./next-action.js";
+import { decideGoalNextAction } from "./policies.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import { observeGoal } from "./goal-protocol.js";
 import { resetGoalProtocolEpoch } from "./goal-protocol.js";
