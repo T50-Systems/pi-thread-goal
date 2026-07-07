@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- consolidated the source tree from 41 modules into 19: evaluator, command
+  surface, goal state, persistence, protocol, operations, continuation ports,
+  runtime guards, pure policies, and UI formatting each now live in a single
+  module. No behavior changes; boundary tests were retargeted at the
+  consolidated modules and the commands/handlers import cycle was removed.
+
 ## 0.4.0 - 2026-07-07
 
 ### Added

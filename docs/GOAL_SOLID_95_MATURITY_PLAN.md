@@ -1,5 +1,13 @@
 # Goal Runtime SOLID 9.5 Maturity Plan
 
+> **Estado: histórico (2026-07-07).** La dirección de este plan —más splitting
+> por responsabilidad— fue reemplazada por la consolidación de módulos
+> registrada en `WORKLOG.md` (41 → 19 archivos). Los límites que importan
+> (compat de pi-ai aislado, módulos puros sin adapters, runtime como
+> composition root, adapter Pi de continuación separado del servicio) siguen
+> vigentes y están cubiertos por `tests/boundaries.test.ts`. No seguir este
+> documento para crear archivos nuevos por capa; preferir cohesión por módulo.
+
 ## Context
 
 El código de `pi-thread-goal` ya está en una madurez SOLID media-alta (~7.6/10): dominio separado, policies puras, adapters aislados, tests de boundaries e invariantes mínimos. Para subirlo hacia ~9.5/10, el siguiente salto debe concentrarse en los puntos menos maduros sin agregar features:
