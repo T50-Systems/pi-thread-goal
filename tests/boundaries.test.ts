@@ -33,14 +33,14 @@ describe("source boundaries", () => {
 		expect(source).not.toMatch(/sendUserMessage/);
 	});
 
-	it("keeps the Pi AI compat import isolated in the evaluator adapter", () => {
+	it("keeps the Pi AI compat import isolated in the evaluator module", () => {
 		const matches = sourceFiles().flatMap((path) =>
 			readFileSync(path, "utf8").includes("@earendil-works/pi-ai/compat")
 				? [relativeSourcePath(path)]
 				: [],
 		);
 
-		expect(matches).toEqual(["/src/evaluator-adapter.ts"]);
+		expect(matches).toEqual(["/src/evaluator.ts"]);
 	});
 
 	it("keeps next-action independent from tool-facing modules", () => {

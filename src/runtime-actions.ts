@@ -7,7 +7,7 @@ import {
 	shouldPauseForContinuationDeliveryFailure,
 	shouldRetryPendingContinuation,
 } from "./continuation.js";
-import { classifyGoalRuntimeError } from "./evaluator-policy.js";
+import { classifyGoalRuntimeError } from "./evaluator.js";
 import {
 	MAX_AUTOMATIC_CONTINUATION_TURNS,
 	type GoalNextAction,

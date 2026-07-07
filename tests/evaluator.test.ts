@@ -5,7 +5,7 @@ import {
 	DEFAULT_EVALUATOR_TIMEOUT_MS,
 	parseEvaluatorDecision,
 	resolveEvaluatorTimeoutMs,
-} from "../src/evaluator-policy.js";
+} from "../src/evaluator.js";
 import type { GoalState } from "../src/types.js";
 import type { GoalRuntimeContext } from "../src/runtime-types.js";
 
