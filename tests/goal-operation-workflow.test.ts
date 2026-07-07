@@ -2,20 +2,22 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { executeGoalOperation } from "../src/goal-operations.js";
 import {
 	authorizeProgressUpdate,
 	observeGoal,
-} from "../src/goal-protocol-policy.js";
-import { resetGoalProtocolEpoch } from "../src/goal-protocol-tokens.js";
-import { executeGoalOperation } from "../src/goal-operation-workflow.js";
-import { reduceGoalState } from "../src/state.js";
+	resetGoalProtocolEpoch,
+} from "../src/goal-protocol.js";
+import { reduceGoalState } from "../src/goal-state.js";
 
 const SRC_DIR = join(dirname(fileURLToPath(import.meta.url)), "../src");
 
 describe("goal operation workflow adoption", () => {
 	it("keeps direct saveGoalState usage inside the legacy store only", () => {
 		const offenders = readdirSync(SRC_DIR)
-			.filter((file) => file.endsWith(".ts") && file !== "goal-state-store.ts")
+			.filter(
+				(file) => file.endsWith(".ts") && file !== "goal-state-persistence.ts",
+			)
 			.flatMap((file) => {
 				const path = join(SRC_DIR, file);
 				const text = readFileSync(path, "utf8");
@@ -27,7 +29,7 @@ describe("goal operation workflow adoption", () => {
 
 	it("routes mutating runtime files through saveGoalOperation", () => {
 		const files = [
-			"goal-command-handlers.ts",
+			"commands.ts",
 			"tools.ts",
 			"runtime-actions.ts",
 			"runtime-mode-handlers.ts",

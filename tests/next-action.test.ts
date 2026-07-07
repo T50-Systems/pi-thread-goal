@@ -4,7 +4,7 @@ import {
 	hasReachedAutomaticContinuationLimit,
 	hasReachedTokenBudget,
 	MAX_AUTOMATIC_CONTINUATION_TURNS,
-} from "../src/next-action.js";
+} from "../src/policies.js";
 import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {

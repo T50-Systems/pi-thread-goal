@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { evaluateGoal } from "../src/evaluator.js";
 import {
 	classifyGoalRuntimeError,
 	DEFAULT_EVALUATOR_TIMEOUT_MS,
+	evaluateGoal,
 	parseEvaluatorDecision,
 	resolveEvaluatorTimeoutMs,
-} from "../src/evaluator-policy.js";
-import type { GoalState } from "../src/types.js";
+} from "../src/evaluator.js";
 import type { GoalRuntimeContext } from "../src/runtime-types.js";
+import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {
 	version: 1,

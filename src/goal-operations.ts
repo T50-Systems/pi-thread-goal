@@ -1,7 +1,11 @@
+import { invalidateGoalProtocolCapabilities } from "./goal-protocol.js";
+import { reduceGoalState } from "./goal-state.js";
+import { cloneGoalState, GOAL_CUSTOM_TYPE } from "./goal-state-persistence.js";
 import type {
 	GoalEvent,
 	GoalEventSource,
 	GoalState,
+	GoalStateEntry,
 	GoalStatus,
 } from "./types.js";
 
@@ -94,42 +98,6 @@ export function buildGoalOperationContract(
 		case "continuation":
 			return { ...base, beforeStatus: "active", afterStatus: "active" };
 	}
-}
-
-export function buildResumeGoalContract(
-	event: Extract<GoalEvent, { action: "resume" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildPauseGoalContract(
-	event: Extract<GoalEvent, { action: "pause" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildCompleteGoalContract(
-	event: Extract<GoalEvent, { action: "complete" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildProgressGoalContract(
-	event: Extract<GoalEvent, { action: "progress" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildContinuationGoalContract(
-	event: Extract<GoalEvent, { action: "continuation" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
-}
-
-export function buildEvaluationGoalContract(
-	event: Extract<GoalEvent, { action: "evaluation" }>,
-): GoalOperationContract {
-	return buildGoalOperationContract(event);
 }
 
 export function verifyGoalOperationContract(input: {
@@ -278,4 +246,79 @@ function verifyRevision(
 			reason: `Expected ${expected}, received ${after.revision}.`,
 		});
 	}
+}
+
+export interface GoalOperationAppendAPI {
+	appendEntry(customType: string, data?: unknown): unknown;
+}
+
+export type GoalOperationResult =
+	| { ok: true; state: GoalState | null; entry: GoalStateEntry }
+	| {
+			ok: false;
+			state: GoalState | null;
+			violations: GoalOperationContractViolation[];
+	  };
+
+export function executeGoalOperation(input: {
+	pi: GoalOperationAppendAPI;
+	before: GoalState | null;
+	event: GoalEvent;
+	contract?: GoalOperationContract;
+}): GoalOperationResult {
+	const contract = input.contract ?? buildGoalOperationContract(input.event);
+	const after = reduceGoalState(input.before, input.event);
+	const result = verifyGoalOperationContract({
+		contract,
+		before: input.before,
+		event: input.event,
+		after,
+	});
+	if (!result.ok) {
+		return {
+			ok: false,
+			state: input.before,
+			violations: result.violations,
+		};
+	}
+
+	const entry = toContractedGoalStateEntry(input.event, after);
+	input.pi.appendEntry(GOAL_CUSTOM_TYPE, entry);
+	invalidateGoalProtocolCapabilities(input.event.goalId);
+	if (input.before?.goalId && input.before.goalId !== input.event.goalId) {
+		invalidateGoalProtocolCapabilities(input.before.goalId);
+	}
+	return { ok: true, state: entry.state, entry };
+}
+
+export function saveGoalOperation(
+	pi: GoalOperationAppendAPI,
+	event: GoalEvent,
+	before: GoalState | null,
+	contract?: GoalOperationContract,
+): GoalState | null {
+	const result = executeGoalOperation({ pi, before, event, contract });
+	if (result.ok) return result.state;
+	throw new Error(formatGoalOperationViolation(event, result.violations));
+}
+
+function toContractedGoalStateEntry(
+	event: GoalEvent,
+	state: GoalState | null,
+): GoalStateEntry {
+	return {
+		action: event.action,
+		state: cloneGoalState(state),
+		event: structuredClone(event),
+	};
+}
+
+function formatGoalOperationViolation(
+	event: GoalEvent,
+	violations: GoalOperationContractViolation[],
+): string {
+	const details = violations
+		.map((violation) => `${violation.field}: ${violation.reason}`)
+		.join("; ");
+	return `Goal ${event.action} operation violated its contract${details ? ` (${details})` : ""}.`;
 }

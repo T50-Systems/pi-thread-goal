@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { createContinuationGuard } from "../src/continuation.js";
 import {
+	type GoalSessionEntry,
+	loadGoalState,
+	saveGoalState,
+} from "../src/goal-state-persistence.js";
+import type { GoalRuntimeServices } from "../src/runtime-actions.js";
+import {
 	handleAgentEndWithLock,
 	handleBeforeAgentStart,
 	handleContext,
 	handleSessionStart,
 } from "../src/runtime-mode-handlers.js";
-import {
-	loadGoalState,
-	saveGoalState,
-	type GoalSessionEntry,
-} from "../src/state.js";
-import type { GoalRuntimeServices } from "../src/runtime-actions.js";
 import type {
 	GoalRuntimeContext,
 	RuntimeExtensionAPI,

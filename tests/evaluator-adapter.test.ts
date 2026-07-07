@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { completeGoalEvaluation } from "../src/evaluator-adapter.js";
+import { completeGoalEvaluation } from "../src/evaluator.js";
 
 const completeMock = vi.fn();
 

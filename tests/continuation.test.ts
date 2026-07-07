@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-	clearQueuedGoalContinuation,
 	CONTINUATION_WATCHDOG_MS,
+	clearQueuedGoalContinuation,
 	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
 	queueGoalContinuation,
+	shouldPauseForContinuationDeliveryFailure,
 	shouldQueueGoalContinuation,
 	shouldResumeGoalAfterSessionStart,
 	shouldRetryPendingContinuation,
-	shouldPauseForContinuationDeliveryFailure,
 } from "../src/continuation.js";
-import type { GoalState } from "../src/types.js";
 import type { GoalRuntimeContext } from "../src/runtime-types.js";
+import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {
 	version: 1,

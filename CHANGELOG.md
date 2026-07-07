@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- Biome linting and formatting scripts for the existing TypeScript style.
+- Coverage reporting via `npm run test:coverage` with V8, text, and lcov output.
+- In-process E2E smoke coverage for `/goal` auto-continuation through the public extension entry.
+- Tag-based release workflow with npm provenance publishing.
+- Contributor guide and GitHub issue forms for bug reports and feature requests.
+
+### Changed
+
+- consolidated the source tree from 41 modules into 19: evaluator, command
+  surface, goal state, persistence, protocol, operations, continuation ports,
+  runtime guards, pure policies, and UI formatting each now live in a single
+  module. No behavior changes; boundary tests were retargeted at the
+  consolidated modules and the commands/handlers import cycle was removed.
+
 ## 0.4.0 - 2026-07-07
 
 ### Added

@@ -1,10 +1,11 @@
-import { reduceGoalState } from "./goal-state-reducer.js";
-import type {
-	GoalEvent,
-	GoalProgress,
-	GoalState,
-	GoalStateEntry,
-	GoalStateSnapshot,
+import { reduceGoalState } from "./goal-state.js";
+import {
+	type GoalEvent,
+	type GoalProgress,
+	type GoalState,
+	type GoalStateEntry,
+	type GoalStateSnapshot,
+	isRecord,
 } from "./types.js";
 
 export const GOAL_CUSTOM_TYPE = "thread-goal-state";
@@ -324,6 +325,31 @@ function isGoalStatus(value: unknown): value is GoalState["status"] {
 	return value === "active" || value === "paused" || value === "complete";
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null;
+export interface GoalSessionContext {
+	sessionManager: {
+		getBranch(): GoalSessionEntry[];
+	};
+}
+
+export interface GoalAppendAPI {
+	appendEntry(customType: string, data?: unknown): unknown;
+}
+
+/**
+ * Low-level legacy reducer persistence used for replay-compatible callers.
+ * Prefer saveGoalOperation/executeGoalOperation for runtime, tool, and user
+ * mutations so goal operation contracts verify metadata and postconditions.
+ */
+export function saveGoalState(
+	pi: GoalAppendAPI,
+	event: GoalEvent,
+	current: GoalState | null,
+): GoalState | null {
+	const entry = toGoalStateEntry(event, current);
+	pi.appendEntry(GOAL_CUSTOM_TYPE, entry);
+	return entry.state;
+}
+
+export function loadGoalState(ctx: GoalSessionContext): GoalState | null {
+	return createGoalStateSnapshot(ctx.sessionManager.getBranch()).current;
 }

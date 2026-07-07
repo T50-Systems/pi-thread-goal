@@ -1,12 +1,139 @@
-import type { EvaluatorMessage, GoalEvaluatorProvider } from "./evaluator-provider.js";
-import {
-	parseEvaluatorDecision,
-	resolveEvaluatorTimeoutMs,
-} from "./evaluator-policy.js";
-import { piEvaluatorProvider } from "./pi-evaluator-provider.js";
 import { renderGoalEvaluationPrompt } from "./prompts.js";
-import type { EvaluatorDecision, GoalState } from "./types.js";
 import type { GoalRuntimeContext } from "./runtime-types.js";
+import type {
+	EvaluatorDecision,
+	GoalRuntimeInterruptionKind,
+	GoalState,
+} from "./types.js";
+
+// --- Evaluator ports ---
+
+export interface EvaluatorMessage {
+	role: "user";
+	content: Array<{ type: "text"; text: string }>;
+	timestamp: number;
+}
+
+export interface EvaluatorResponse {
+	content: Array<{ type: string; text?: string }>;
+}
+
+export interface GoalEvaluatorProvider {
+	complete(
+		model: unknown,
+		context: { systemPrompt: string; messages: EvaluatorMessage[] },
+		options: {
+			apiKey?: string;
+			headers?: Record<string, string>;
+			signal?: AbortSignal;
+		},
+	): Promise<EvaluatorResponse>;
+}
+
+// --- Evaluator policy (pure) ---
+
+export const DEFAULT_EVALUATOR_TIMEOUT_MS = 45_000;
+export const EVALUATOR_TIMEOUT_ENV = "GOAL_EVALUATOR_TIMEOUT_MS";
+
+export function resolveEvaluatorTimeoutMs(
+	override?: number,
+	env: NodeJS.ProcessEnv = process.env,
+): number {
+	if (
+		typeof override === "number" &&
+		Number.isFinite(override) &&
+		override > 0
+	) {
+		return Math.floor(override);
+	}
+
+	const raw = env[EVALUATOR_TIMEOUT_ENV];
+	if (!raw) return DEFAULT_EVALUATOR_TIMEOUT_MS;
+	const parsed = Number(raw);
+	return Number.isFinite(parsed) && parsed > 0
+		? Math.floor(parsed)
+		: DEFAULT_EVALUATOR_TIMEOUT_MS;
+}
+
+export function parseEvaluatorDecision(text: string): EvaluatorDecision {
+	const match = text.match(/\{[\s\S]*\}/);
+	const candidate = match ? match[0] : text;
+	try {
+		const parsed = JSON.parse(candidate) as Partial<EvaluatorDecision>;
+		return {
+			met: Boolean(parsed.met),
+			reason:
+				typeof parsed.reason === "string"
+					? parsed.reason
+					: "Evaluator returned no reason.",
+		};
+	} catch {
+		return {
+			met: false,
+			reason: text || "Evaluator response was not valid JSON.",
+		};
+	}
+}
+
+export function classifyGoalRuntimeError(
+	error: unknown,
+): GoalRuntimeInterruptionKind {
+	if (isAbortLikeError(error)) return "retryable";
+	const message = error instanceof Error ? error.message : String(error);
+	if (
+		/abort|cancel|compact|retry|timeout|timed out|temporary|temporarily|rate limit|overload/i.test(
+			message,
+		)
+	)
+		return "retryable";
+	return "non-retryable";
+}
+
+function isAbortLikeError(error: unknown): boolean {
+	if (!(error instanceof Error)) return false;
+	return error.name === "AbortError" || error.name === "TimeoutError";
+}
+
+// --- Pi provider (only module that touches @earendil-works/pi-ai/compat) ---
+
+const PI_AI_COMPAT_MODULE = "@earendil-works/pi-ai/compat";
+
+type EvaluatorComplete = (
+	model: never,
+	context: { systemPrompt: string; messages: EvaluatorMessage[] },
+	options: {
+		apiKey?: string;
+		headers?: Record<string, string>;
+		signal?: AbortSignal;
+	},
+) => Promise<EvaluatorResponse>;
+
+export async function completeGoalEvaluation(
+	model: never,
+	context: { systemPrompt: string; messages: EvaluatorMessage[] },
+	options: {
+		apiKey?: string;
+		headers?: Record<string, string>;
+		signal?: AbortSignal;
+	},
+): Promise<EvaluatorResponse> {
+	const compat = (await import(PI_AI_COMPAT_MODULE)) as {
+		complete: EvaluatorComplete;
+	};
+	return compat.complete(model, context, options);
+}
+
+export function createPiEvaluatorProvider(): GoalEvaluatorProvider {
+	return {
+		complete(model, context, options) {
+			return completeGoalEvaluation(model as never, context, options);
+		},
+	};
+}
+
+export const piEvaluatorProvider = createPiEvaluatorProvider();
+
+// --- Evaluation service ---
 
 const EVALUATOR_SYSTEM_PROMPT =
 	'You evaluate whether a goal condition is already satisfied. Read the goal condition and the conversation evidence. Return strict JSON only: {"met": boolean, "reason": string}. The reason must be one concise sentence.';

@@ -3,7 +3,7 @@ import {
 	canAutoResumeGoal,
 	canQueueGoalContinuation,
 	decideGoalTransition,
-} from "../src/goal-state-machine.js";
+} from "../src/goal-state.js";
 import type { GoalEvent, GoalState } from "../src/types.js";
 
 const activeGoal: GoalState = {
