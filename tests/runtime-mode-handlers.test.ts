@@ -3,6 +3,7 @@ import { createContinuationGuard } from "../src/continuation.js";
 import {
 	handleAgentEndWithLock,
 	handleBeforeAgentStart,
+	handleContext,
 	handleSessionStart,
 } from "../src/runtime-mode-handlers.js";
 import {
@@ -70,6 +71,27 @@ describe("runtime mode handlers", () => {
 		expect(loadGoalState(harness.runtimeCtx)?.continuationPendingAt).toEqual(
 			expect.any(Number),
 		);
+	});
+
+	it("retries stale pending continuations from the context hook", async () => {
+		const harness = createHarness({ isIdle: true, hasPendingMessages: false });
+		const active = seedGoal(harness.branch);
+		saveGoalState(
+			harness.runtimePi,
+			{
+				action: "continuation",
+				goalId: active.goalId,
+				now: 2,
+				pending: true,
+				reason: "stale",
+			},
+			active,
+		);
+
+		await handleContext({ messages: [] }, harness.services);
+
+		expect(harness.sentMessages).toHaveLength(1);
+		expect(loadGoalState(harness.runtimeCtx)?.continuationAttempt).toBe(2);
 	});
 
 	it("resets the evaluator lock when agent-end evaluation pauses the goal", async () => {

@@ -11,6 +11,7 @@ export { startGoal };
 export type GoalCommandKind =
 	| "show"
 	| "status"
+	| "doctor"
 	| "create"
 	| "edit"
 	| "pause"
@@ -35,6 +36,7 @@ export interface ParsedGoalCommand {
 export interface GoalCommandContext {
 	hasUI: boolean;
 	isIdle(): boolean;
+	hasPendingMessages?(): boolean;
 	waitForIdle(): Promise<void>;
 	sessionManager: {
 		getBranch(): Array<{ type: string; customType?: string; data?: unknown }>;
@@ -81,6 +83,7 @@ interface ExtensionAPI extends GoalActionAPI {
 
 const CONTROL_COMMANDS = [
 	"status",
+	"doctor",
 	"edit",
 	"pause",
 	"resume",
@@ -139,6 +142,7 @@ export function parseGoalCommand(args: string): ParsedGoalCommand {
 	};
 
 	if (first === "status") return { kind: "status", ...base };
+	if (first === "doctor") return { kind: "doctor", ...base };
 	if (first === "edit") return { kind: "edit", ...base };
 	if (first === "pause") return { kind: "pause", ...base };
 	if (first === "resume") return { kind: "resume", ...base };

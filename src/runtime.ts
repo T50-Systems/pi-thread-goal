@@ -33,7 +33,7 @@ export function registerGoalRuntime(pi: unknown): void {
 	);
 
 	runtimePi.on("context", async (event, ctx) =>
-		handleContext(event, ctx as GoalRuntimeContext),
+		handleContext(event, servicesFor(ctx)),
 	);
 
 	runtimePi.on("session_before_compact", async (event, ctx) =>

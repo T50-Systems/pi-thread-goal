@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `/goal doctor` reports continuation phase, retry attempts, stale state, and
+  recovery guidance.
+
+### Fixed
+
+- active goals now retry stale continuation delivery with backoff and pause with a
+  visible reason after repeated delivery failures instead of remaining silently active.
+
 ## 0.3.0 - 2026-07-01
 
 ### Added

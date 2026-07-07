@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
 	clearQueuedGoalContinuation,
 	CONTINUATION_WATCHDOG_MS,
+	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
 	queueGoalContinuation,
 	shouldQueueGoalContinuation,
 	shouldResumeGoalAfterSessionStart,
 	shouldRetryPendingContinuation,
+	shouldPauseForContinuationDeliveryFailure,
 } from "../src/continuation.js";
 import type { GoalState } from "../src/types.js";
 import type { GoalRuntimeContext } from "../src/runtime-types.js";
@@ -111,6 +113,56 @@ describe("pending continuation watchdog", () => {
 			),
 		).toBe(false);
 	});
+
+	it("backs off stale retries and pauses at the delivery limit", () => {
+		const firstAttempt = {
+			...goal,
+			continuationPendingAt: 1_000,
+			continuationAttempt: 1,
+		};
+		const secondAttempt = { ...firstAttempt, continuationAttempt: 2 };
+		const exhausted = {
+			...firstAttempt,
+			continuationAttempt: MAX_CONTINUATION_DELIVERY_ATTEMPTS,
+		};
+		const idle = { isIdle: () => true, hasPendingMessages: () => false };
+
+		expect(
+			shouldRetryPendingContinuation(
+				firstAttempt,
+				idle,
+				1_000 + CONTINUATION_WATCHDOG_MS,
+			),
+		).toBe(true);
+		expect(
+			shouldRetryPendingContinuation(
+				secondAttempt,
+				idle,
+				1_000 + CONTINUATION_WATCHDOG_MS,
+			),
+		).toBe(false);
+		expect(
+			shouldRetryPendingContinuation(
+				secondAttempt,
+				idle,
+				1_000 + CONTINUATION_WATCHDOG_MS * 2,
+			),
+		).toBe(true);
+		expect(
+			shouldRetryPendingContinuation(
+				exhausted,
+				idle,
+				1_000 + CONTINUATION_WATCHDOG_MS * 4,
+			),
+		).toBe(false);
+		expect(
+			shouldPauseForContinuationDeliveryFailure(
+				exhausted,
+				idle,
+				1_000 + CONTINUATION_WATCHDOG_MS * 4,
+			),
+		).toBe(true);
+	});
 });
 
 describe("queueGoalContinuation", () => {
@@ -155,7 +207,11 @@ describe("queueGoalContinuation", () => {
 		expect(
 			queueGoalContinuation({
 				ports: {
-					store: { markPending: () => false },
+					store: {
+						markPending: () => null,
+						markSent: () => null,
+						markFailed: () => null,
+					},
 					queue: { send: sendUserMessage },
 					notifier: { notify: ctx.ui?.notify },
 				},
@@ -199,6 +255,79 @@ describe("queueGoalContinuation", () => {
 			"warning",
 		);
 	});
+
+	it("does not throw when sent-state persistence fails after delivery", () => {
+		const ctx = makeCtx({
+			isIdle: () => true,
+			hasPendingMessages: () => false,
+		});
+		const sendUserMessage = vi.fn();
+
+		expect(
+			queueGoalContinuation({
+				ports: {
+					store: {
+						markPending: () => goal,
+						markSent: () => {
+							throw new Error("sent persist failed");
+						},
+						markFailed: () => null,
+					},
+					queue: { send: sendUserMessage },
+					notifier: { notify: ctx.ui?.notify },
+				},
+				ctx,
+				guard: { queuedGoalId: null },
+				goal,
+				prompt: "continue",
+			}),
+		).toBe(true);
+
+		expect(sendUserMessage).toHaveBeenCalledWith("continue", "immediate");
+		expect(ctx.ui?.notify).toHaveBeenCalledWith(
+			expect.stringContaining("sent state could not be persisted"),
+			"warning",
+		);
+	});
+
+	it("does not throw when failed-state persistence fails after send failure", () => {
+		const ctx = makeCtx({
+			isIdle: () => true,
+			hasPendingMessages: () => false,
+		});
+		const sendUserMessage = vi.fn(() => {
+			throw new Error("send failed");
+		});
+
+		expect(
+			queueGoalContinuation({
+				ports: {
+					store: {
+						markPending: () => goal,
+						markSent: () => null,
+						markFailed: () => {
+							throw new Error("failed persist failed");
+						},
+					},
+					queue: { send: sendUserMessage },
+					notifier: { notify: ctx.ui?.notify },
+				},
+				ctx,
+				guard: { queuedGoalId: null },
+				goal,
+				prompt: "continue",
+			}),
+		).toBe(false);
+
+		expect(ctx.ui?.notify).toHaveBeenCalledWith(
+			expect.stringContaining("failed state could not be persisted"),
+			"warning",
+		);
+		expect(ctx.ui?.notify).toHaveBeenCalledWith(
+			expect.stringContaining("send failed"),
+			"warning",
+		);
+	});
 });
 
 function makePorts(
@@ -217,10 +346,41 @@ function makePorts(
 						action: "continuation",
 						goalId: goal.goalId,
 						pending: true,
+						phase: "queued",
 						reason,
 					},
 				});
-				return true;
+				return {
+					...goal,
+					continuationPendingAt: Date.now(),
+					continuationPhase: "queued" as const,
+					continuationReason: reason,
+					continuationAttempt: (goal.continuationAttempt ?? 0) + 1,
+				};
+			},
+			markSent(goal: GoalState, options: { mode: "immediate" | "followUp" }) {
+				appendEntry("thread-goal-state", {
+					event: {
+						action: "continuation",
+						goalId: goal.goalId,
+						pending: true,
+						phase: "sent",
+						mode: options.mode,
+					},
+				});
+				return { ...goal, continuationPhase: "sent" as const };
+			},
+			markFailed(goal: GoalState, options: { error: string }) {
+				appendEntry("thread-goal-state", {
+					event: {
+						action: "continuation",
+						goalId: goal.goalId,
+						pending: true,
+						phase: "failed",
+						error: options.error,
+					},
+				});
+				return { ...goal, continuationPhase: "failed" as const };
 			},
 		},
 		queue: {

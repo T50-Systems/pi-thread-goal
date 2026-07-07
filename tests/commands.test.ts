@@ -73,6 +73,12 @@ describe("parseGoalCommand", () => {
 			replace: false,
 			start: true,
 		});
+		expect(parseGoalCommand("doctor")).toEqual({
+			kind: "doctor",
+			confirmed: false,
+			replace: false,
+			start: false,
+		});
 	});
 
 	it("parses dismiss", () => {

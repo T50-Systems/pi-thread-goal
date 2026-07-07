@@ -80,6 +80,7 @@ export function reduceGoalStateMachine(
 				pauseMessage: normalizeText(event.message),
 				continuationPendingAt: undefined,
 				continuationReason: undefined,
+				continuationPhase: "cleared",
 			};
 		case "resume":
 			if (!current) return current;
@@ -93,6 +94,15 @@ export function reduceGoalStateMachine(
 				pauseReason: undefined,
 				pauseMessage: undefined,
 				lastEvaluationReason: "Goal resumed.",
+				continuationPendingAt: undefined,
+				continuationReason: undefined,
+				continuationPhase: undefined,
+				continuationAttempt: undefined,
+				continuationFailures: undefined,
+				continuationLastError: undefined,
+				continuationLastMode: undefined,
+				continuationLastSentAt: undefined,
+				continuationLastStartedAt: undefined,
 			};
 		case "clear":
 			return null;
@@ -117,6 +127,7 @@ export function reduceGoalStateMachine(
 				},
 				continuationPendingAt: undefined,
 				continuationReason: undefined,
+				continuationPhase: "cleared",
 			};
 		case "dismiss":
 			return current
@@ -143,20 +154,56 @@ export function reduceGoalStateMachine(
 				: current;
 		case "continuation":
 			if (!current) return current;
-			return event.pending
-				? {
-						...current,
-						updatedAt: event.now,
-						continuationPendingAt: event.now,
-						continuationReason: normalizeText(event.reason),
-					}
-				: {
-						...current,
-						updatedAt: event.now,
-						continuationPendingAt: undefined,
-						continuationReason: undefined,
-					};
+			return reduceContinuationState(current, event);
 		default:
 			return current;
 	}
+}
+
+function reduceContinuationState(
+	current: GoalState,
+	event: Extract<GoalEvent, { action: "continuation" }>,
+): GoalState {
+	const phase = event.phase ?? (event.pending ? "queued" : "cleared");
+	const reason = normalizeText(event.reason) ?? current.continuationReason;
+	const error = normalizeText(event.error);
+	const startsAttempt =
+		event.pending && (phase === "queued" || phase === "stale-retry");
+	const clearsLastError =
+		phase === "queued" || phase === "stale-retry" || phase === "sent";
+	const continuationAttempt = startsAttempt
+		? (current.continuationAttempt ?? 0) + 1
+		: current.continuationAttempt;
+	const continuationFailures =
+		phase === "failed"
+			? (current.continuationFailures ?? 0) + 1
+			: current.continuationFailures;
+
+	if (!event.pending) {
+		return {
+			...current,
+			updatedAt: event.now,
+			continuationPendingAt: undefined,
+			continuationReason: undefined,
+			continuationPhase: phase,
+			continuationLastError: error ?? current.continuationLastError,
+			continuationLastStartedAt:
+				phase === "started" ? event.now : current.continuationLastStartedAt,
+		};
+	}
+
+	return {
+		...current,
+		updatedAt: event.now,
+		continuationPendingAt: event.now,
+		continuationReason: reason,
+		continuationPhase: phase,
+		continuationAttempt,
+		continuationFailures,
+		continuationLastError:
+			error ?? (clearsLastError ? undefined : current.continuationLastError),
+		continuationLastMode: event.mode ?? current.continuationLastMode,
+		continuationLastSentAt:
+			phase === "sent" ? event.now : current.continuationLastSentAt,
+	};
 }

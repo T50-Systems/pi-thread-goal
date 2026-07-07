@@ -1,12 +1,17 @@
 import { isGoalActive } from "./goal-state-machine.js";
 import {
 	clearQueuedGoalContinuation,
+	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
 	type createContinuationGuard,
 	queueGoalContinuation,
+	shouldPauseForContinuationDeliveryFailure,
 	shouldRetryPendingContinuation,
 } from "./continuation.js";
 import { classifyGoalRuntimeError } from "./evaluator-policy.js";
-import { MAX_AUTOMATIC_CONTINUATION_TURNS, type GoalNextAction } from "./next-action.js";
+import {
+	MAX_AUTOMATIC_CONTINUATION_TURNS,
+	type GoalNextAction,
+} from "./next-action.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
 import { renderGoalContinuationPrompt } from "./prompts.js";
 import { loadGoalState } from "./state.js";
@@ -14,7 +19,10 @@ import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { validateGoalStateInvariant } from "./state-invariants.js";
 import { applyGoalUi } from "./ui.js";
 import type { GoalState } from "./types.js";
-import type { GoalRuntimeContext, RuntimeExtensionAPI } from "./runtime-types.js";
+import type {
+	GoalRuntimeContext,
+	RuntimeExtensionAPI,
+} from "./runtime-types.js";
 
 export interface GoalRuntimeServices {
 	runtimePi: RuntimeExtensionAPI;
@@ -85,6 +93,7 @@ export function applyGoalAction(
 				guard: continuationGuard,
 				goal,
 				prompt: renderGoalContinuationPrompt(goal, action.reason),
+				reason: action.reason,
 			});
 			return;
 		default:
@@ -151,6 +160,7 @@ export function handleEvaluatorError(
 				latest,
 				`Goal evaluator was interrupted (${message}). Continue from persisted goal state instead of waiting for another user turn.`,
 			),
+			reason: `Goal evaluator was interrupted (${message}).`,
 		});
 		return;
 	}
@@ -167,10 +177,18 @@ export function retryPendingContinuation(
 	runtimeCtx: GoalRuntimeContext,
 	continuationGuard: ReturnType<typeof createContinuationGuard>,
 	goal: GoalState | null,
-): void {
-	if (!shouldRetryPendingContinuation(goal, runtimeCtx)) return;
+): boolean {
+	if (goal && shouldPauseForContinuationDeliveryFailure(goal, runtimeCtx)) {
+		pauseGoal({ runtimePi, runtimeCtx, continuationGuard }, goal, {
+			reason: "error",
+			message: `Automatic continuation could not be delivered after ${MAX_CONTINUATION_DELIVERY_ATTEMPTS} attempts. Use /goal start or /goal resume to continue.`,
+			notification: `Goal paused: automatic continuation could not be delivered after ${MAX_CONTINUATION_DELIVERY_ATTEMPTS} attempts. Use /goal start or /goal resume to continue.`,
+		});
+		return true;
+	}
+	if (!shouldRetryPendingContinuation(goal, runtimeCtx)) return false;
 	clearQueuedGoalContinuation(continuationGuard, goal.goalId);
-	queueGoalContinuation({
+	return queueGoalContinuation({
 		ports: createPiContinuationPorts(runtimePi, runtimeCtx),
 		ctx: runtimeCtx,
 		guard: continuationGuard,
@@ -179,6 +197,8 @@ export function retryPendingContinuation(
 			goal,
 			"A previously queued goal continuation did not start. Retry from the persisted goal state.",
 		),
+		reason: "Retrying stale goal continuation.",
+		phase: "stale-retry",
 	});
 }
 
