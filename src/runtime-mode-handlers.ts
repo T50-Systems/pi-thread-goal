@@ -30,7 +30,7 @@ import {
 	shouldResumeGoalAfterCompaction,
 } from "./runtime-guards.js";
 import { loadGoalState } from "./goal-state-persistence.js";
-import { saveGoalOperation } from "./goal-operation-workflow.js";
+import { saveGoalOperation } from "./goal-operations.js";
 import { applyGoalUi } from "./ui.js";
 import { collectUsage } from "./usage-collector.js";
 import type { GoalProtocolCapabilitySummary } from "./goal-protocol.js";

@@ -7,7 +7,7 @@ import {
 	observeGoal,
 } from "../src/goal-protocol.js";
 import { resetGoalProtocolEpoch } from "../src/goal-protocol.js";
-import { executeGoalOperation } from "../src/goal-operation-workflow.js";
+import { executeGoalOperation } from "../src/goal-operations.js";
 import { reduceGoalState } from "../src/goal-state.js";
 
 const SRC_DIR = join(dirname(fileURLToPath(import.meta.url)), "../src");

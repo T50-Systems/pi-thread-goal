@@ -12,7 +12,7 @@ import {
 import { renderGoalStartPrompt } from "./prompts.js";
 import { loadGoalState } from "./goal-state-persistence.js";
 import { validateObjective } from "./goal-state.js";
-import { saveGoalOperation } from "./goal-operation-workflow.js";
+import { saveGoalOperation } from "./goal-operations.js";
 import {
 	GOAL_USAGE,
 	applyGoalUi,

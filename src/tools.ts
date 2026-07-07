@@ -4,7 +4,7 @@ import { Type } from "typebox";
 import { validateGoalCompletion } from "./completion-policy.js";
 import { requireGoalProtocolContext } from "./goal-protocol.js";
 import { validateGoalProgressUpdate } from "./goal-progress-policy.js";
-import { saveGoalOperation } from "./goal-operation-workflow.js";
+import { saveGoalOperation } from "./goal-operations.js";
 import {
 	authorizeGoalCompletion,
 	authorizeProgressUpdate,
