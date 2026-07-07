@@ -7,8 +7,8 @@ import {
 import { evaluateGoal } from "./evaluator.js";
 import { decideGoalNextAction } from "./next-action.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
-import { observeGoal } from "./goal-protocol-policy.js";
-import { resetGoalProtocolEpoch } from "./goal-protocol-tokens.js";
+import { observeGoal } from "./goal-protocol.js";
+import { resetGoalProtocolEpoch } from "./goal-protocol.js";
 import {
 	GOAL_CONTEXT_CUSTOM_TYPE,
 	GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,
@@ -33,7 +33,7 @@ import { loadGoalState } from "./goal-state-persistence.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { applyGoalUi } from "./ui.js";
 import { collectUsage } from "./usage-collector.js";
-import type { GoalProtocolCapabilitySummary } from "./goal-protocol-types.js";
+import type { GoalProtocolCapabilitySummary } from "./goal-protocol.js";
 import type {
 	AgentEndEvent,
 	ContextEvent,

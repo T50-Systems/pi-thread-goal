@@ -18,7 +18,7 @@ import { loadGoalState } from "./goal-state-persistence.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { validateGoalStateInvariant } from "./goal-state.js";
 import { applyGoalUi } from "./ui.js";
-import type { GoalProtocolContext } from "./goal-protocol-context.js";
+import type { GoalProtocolContext } from "./goal-protocol.js";
 import type { GoalState } from "./types.js";
 import type {
 	GoalRuntimeContext,

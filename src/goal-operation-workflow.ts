@@ -1,7 +1,7 @@
 import { GOAL_CUSTOM_TYPE } from "./goal-state-persistence.js";
 import { cloneGoalState } from "./goal-state-persistence.js";
 import { reduceGoalStateMachine } from "./goal-state.js";
-import { invalidateGoalProtocolCapabilities } from "./goal-protocol-tokens.js";
+import { invalidateGoalProtocolCapabilities } from "./goal-protocol.js";
 import {
 	buildGoalOperationContract,
 	verifyGoalOperationContract,
