@@ -13,7 +13,7 @@ import type { GoalRuntimeServices } from "./runtime-actions.js";
 export {
 	filterGoalContextMessages,
 	shouldResumeGoalAfterCompaction,
-} from "./runtime-guards.js";
+} from "./runtime-mode-handlers.js";
 import type {
 	GoalRuntimeContext,
 	RuntimeExtensionAPI,
