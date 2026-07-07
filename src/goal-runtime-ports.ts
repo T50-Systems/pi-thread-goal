@@ -35,24 +35,3 @@ export interface GoalRuntimeIdleProbe {
 	hasPendingMessages?: () => boolean;
 }
 
-export interface EvaluatorMessage {
-	role: "user";
-	content: Array<{ type: "text"; text: string }>;
-	timestamp: number;
-}
-
-export interface EvaluatorResponse {
-	content: Array<{ type: string; text?: string }>;
-}
-
-export interface GoalEvaluatorProvider {
-	complete(
-		model: unknown,
-		context: { systemPrompt: string; messages: EvaluatorMessage[] },
-		options: {
-			apiKey?: string;
-			headers?: Record<string, string>;
-			signal?: AbortSignal;
-		},
-	): Promise<EvaluatorResponse>;
-}
