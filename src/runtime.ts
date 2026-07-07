@@ -1,3 +1,4 @@
+import { requireGoalProtocolContext } from "./goal-protocol-context.js";
 import { createContinuationGuard } from "./continuation.js";
 import {
 	handleAgentEndWithLock,
@@ -22,11 +23,15 @@ export function registerGoalRuntime(pi: unknown): void {
 	const lock = { evaluatingGoalId: null as string | null };
 	const continuationGuard = createContinuationGuard();
 	const runtimePi = pi as RuntimeExtensionAPI;
-	const servicesFor = (ctx: unknown): GoalRuntimeServices => ({
-		runtimePi,
-		runtimeCtx: ctx as GoalRuntimeContext,
-		continuationGuard,
-	});
+	const servicesFor = (ctx: unknown): GoalRuntimeServices => {
+		const runtimeCtx = ctx as GoalRuntimeContext;
+		return {
+			runtimePi,
+			runtimeCtx,
+			protocolContext: requireGoalProtocolContext(runtimeCtx),
+			continuationGuard,
+		};
+	};
 
 	runtimePi.on("before_agent_start", async (_event, ctx) =>
 		handleBeforeAgentStart(servicesFor(ctx)),

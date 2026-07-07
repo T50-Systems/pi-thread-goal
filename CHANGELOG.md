@@ -6,11 +6,17 @@
 
 - `/goal doctor` reports continuation phase, retry attempts, stale state, and
   recovery guidance.
+- `prepare_goal_completion` validates evidence and registers the completion
+  candidate required by `complete_goal`.
 
 ### Fixed
 
 - active goals now retry stale continuation delivery with backoff and pause with a
   visible reason after repeated delivery failures instead of remaining silently active.
+- model goal mutations now require scoped internal auto-capabilities, preventing
+  completion calls based only on stale summaries or unobserved state.
+- stale async evaluator results are skipped when goal revision changes during
+  evaluation, avoiding appends from pre-await snapshots.
 
 ## 0.3.0 - 2026-07-01
 

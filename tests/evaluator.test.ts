@@ -11,6 +11,7 @@ import type { GoalRuntimeContext } from "../src/runtime-types.js";
 
 const goal: GoalState = {
 	version: 1,
+	revision: 1,
 	goalId: "g1",
 	objective: "ship",
 	status: "active",
@@ -126,7 +127,7 @@ describe("evaluateGoal", () => {
 		).resolves.toEqual({ met: false, reason: "auth down" });
 	});
 
- 	it("uses an injected evaluator provider instead of requiring a concrete adapter", async () => {
+	it("uses an injected evaluator provider instead of requiring a concrete adapter", async () => {
 		const calls: unknown[] = [];
 		await expect(
 			evaluateGoal(
@@ -143,7 +144,11 @@ describe("evaluateGoal", () => {
 					provider: {
 						async complete(model, context, options) {
 							calls.push({ model, context, options });
-							return { content: [{ type: "text", text: '{"met":true,"reason":"done"}' }] };
+							return {
+								content: [
+									{ type: "text", text: '{"met":true,"reason":"done"}' },
+								],
+							};
 						},
 					},
 				},
@@ -157,6 +162,7 @@ describe("evaluateGoal", () => {
 function makeCtx(): GoalRuntimeContext {
 	return {
 		sessionManager: { getBranch: () => [] },
+		goalProtocol: { sessionId: "test-session", branchId: "test-branch" },
 		modelRegistry: {
 			find: () => undefined,
 			getApiKeyAndHeaders: async () => ({ ok: false }),

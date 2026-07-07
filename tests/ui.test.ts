@@ -14,6 +14,7 @@ import type { GoalState } from "../src/types.js";
 
 const baseGoal: GoalState = {
 	version: 1,
+	revision: 1,
 	goalId: "g1",
 	objective: "ship",
 	status: "active",

@@ -4,6 +4,7 @@ import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {
 	version: 1,
+	revision: 1,
 	goalId: "g1",
 	objective: "ship",
 	status: "active",

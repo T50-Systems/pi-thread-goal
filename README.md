@@ -64,6 +64,7 @@ When a goal is active:
 - stale tool-call protection: progress/completion tools refuse to mutate paused or completed goals
 - retryable vs non-retryable evaluator error handling, with non-retryable failures pausing the goal for review
 - anti-contradictory completion validation before `complete_goal` can mark a goal complete
+- Mealy-style protocol policy uses scoped internal auto-capabilities before model tools can mutate or complete a goal
 - `complete_goal` returns `terminate: true` after successful completion so the turn can stop cleanly
 - quiet internal tool UX: progress/checkpoint tools return concise acknowledgements and automatic continuation avoids routine chatter
 - goal state is shown in the widget/overlay, not in Pi's input-adjacent status line
@@ -108,10 +109,20 @@ stale status, idle/pending-message probes, and a recommended recovery action.
 
 - `get_goal`
 - `create_goal`
+- `prepare_goal_completion`
 - `complete_goal`
 - `update_goal_progress`
 
-Tool results are intentionally terse. The widget, `/goal status`, and structured tool `details` preserve debuggability without turning every internal checkpoint into user-facing narration. Completion is guarded against contradictory state such as unresolved blockers, and a successful `complete_goal` response includes `terminate: true`. The extension clears Pi's input-adjacent goal status line so the active objective does not appear below the text box.
+Tool results are intentionally terse. The widget, `/goal status`, and structured
+tool `details` preserve debuggability without turning every internal checkpoint
+into user-facing narration. Mutating model tools require scoped internal
+auto-capabilities, not bearer tokens copied by the model: `get_goal` registers
+a fresh observation for the current context, `prepare_goal_completion` registers
+a completion candidate for the supplied evidence, and `complete_goal` must use
+matching evidence. Completion is guarded against contradictory state such as
+unresolved blockers, and a successful `complete_goal` response includes
+`terminate: true`. The extension clears Pi's input-adjacent goal status line so
+the active objective does not appear below the text box.
 
 ## Design principles
 

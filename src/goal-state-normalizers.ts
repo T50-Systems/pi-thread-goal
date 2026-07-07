@@ -28,6 +28,7 @@ export function createGoalState(
 ): GoalState {
 	return {
 		version: 1,
+		revision: 1,
 		goalId: event.goalId,
 		objective: validateObjective(event.objective),
 		status: "active",

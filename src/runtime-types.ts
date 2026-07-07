@@ -1,9 +1,11 @@
+import type { GoalProtocolContext } from "./goal-protocol-context.js";
 import type { EvaluatorDecision } from "./types.js";
 
 export interface GoalRuntimeContext {
 	sessionManager: {
 		getBranch(): Array<{ type: string; customType?: string; data?: unknown }>;
 	};
+	goalProtocol: GoalProtocolContext;
 	model?: { provider: string; id: string };
 	modelRegistry: {
 		find(provider: string, id: string): unknown;
@@ -25,8 +27,14 @@ export interface GoalRuntimeContext {
 }
 
 export interface RuntimeExtensionAPI {
-	on(event: "before_agent_start", handler: (event: unknown, ctx: unknown) => unknown): void;
-	on(event: "context", handler: (event: ContextEvent, ctx: unknown) => unknown): void;
+	on(
+		event: "before_agent_start",
+		handler: (event: unknown, ctx: unknown) => unknown,
+	): void;
+	on(
+		event: "context",
+		handler: (event: ContextEvent, ctx: unknown) => unknown,
+	): void;
 	on(
 		event: "session_before_compact",
 		handler: (event: SessionBeforeCompactEvent, ctx: unknown) => unknown,
@@ -35,9 +43,18 @@ export interface RuntimeExtensionAPI {
 		event: "session_compact",
 		handler: (event: CompactionResumeEvent, ctx: unknown) => unknown,
 	): void;
-	on(event: "session_start", handler: (event: SessionStartEvent, ctx: unknown) => unknown): void;
-	on(event: "session_tree", handler: (event: unknown, ctx: unknown) => unknown): void;
-	on(event: "agent_end", handler: (event: AgentEndEvent, ctx: unknown) => unknown): void;
+	on(
+		event: "session_start",
+		handler: (event: SessionStartEvent, ctx: unknown) => unknown,
+	): void;
+	on(
+		event: "session_tree",
+		handler: (event: unknown, ctx: unknown) => unknown,
+	): void;
+	on(
+		event: "agent_end",
+		handler: (event: AgentEndEvent, ctx: unknown) => unknown,
+	): void;
 	appendEntry(customType: string, data?: unknown): unknown;
 	sendUserMessage(prompt: string, options?: { deliverAs: "followUp" }): unknown;
 }

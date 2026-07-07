@@ -13,6 +13,13 @@ export function validateGoalStateInvariant(
 			reason: "Goal state invariant failed: goalId is required.",
 		};
 	}
+	if (!Number.isInteger(goal.revision) || goal.revision < 1) {
+		return {
+			ok: false,
+			reason:
+				"Goal state invariant failed: revision must be a positive integer.",
+		};
+	}
 	if (!Number.isInteger(goal.evaluationTurns) || goal.evaluationTurns < 0) {
 		return {
 			ok: false,

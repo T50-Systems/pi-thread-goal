@@ -1,5 +1,11 @@
 import { reduceGoalState } from "./goal-state-reducer.js";
-import type { GoalEvent, GoalState, GoalStateEntry, GoalStateSnapshot } from "./types.js";
+import type {
+	GoalEvent,
+	GoalProgress,
+	GoalState,
+	GoalStateEntry,
+	GoalStateSnapshot,
+} from "./types.js";
 
 export const GOAL_CUSTOM_TYPE = "thread-goal-state";
 
@@ -8,6 +14,10 @@ export interface GoalSessionEntry {
 	customType?: string;
 	data?: unknown;
 }
+
+type ParsedGoalReplayEntry =
+	| { kind: "event"; event: GoalEvent }
+	| { kind: "checkpoint"; state: GoalState };
 
 export function toGoalStateEntry(
 	event: GoalEvent,
@@ -32,23 +42,29 @@ export function createGoalStateSnapshot(
 			branchEntry.customType !== GOAL_CUSTOM_TYPE
 		)
 			continue;
-		const goalEntry = parseGoalStateEntry(branchEntry.data);
-		if (!goalEntry) continue;
-		current = reduceGoalState(current, goalEntry.event);
-		entries.push({ ...goalEntry, state: cloneGoalState(current) });
+		const parsed = parseGoalReplayEntry(branchEntry.data);
+		if (!parsed) continue;
+		if (parsed.kind === "checkpoint") {
+			current = cloneGoalState(parsed.state);
+			continue;
+		}
+		current = reduceGoalState(current, parsed.event);
+		entries.push({
+			action: parsed.event.action,
+			state: cloneGoalState(current),
+			event: cloneEvent(parsed.event),
+		});
 	}
 
 	return { current: cloneGoalState(current), entries };
 }
 
-function parseGoalStateEntry(data: unknown): GoalStateEntry | null {
-	if (!isRecord(data) || !isGoalEvent(data.event) || !("action" in data))
-		return null;
-	return {
-		action: data.event.action,
-		state: isGoalState(data.state) ? cloneGoalState(data.state) : null,
-		event: cloneEvent(data.event),
-	};
+function parseGoalReplayEntry(data: unknown): ParsedGoalReplayEntry | null {
+	if (!isRecord(data)) return null;
+	const event = parseGoalEvent(data.event);
+	if (event) return { kind: "event", event };
+	const state = parseGoalState(data.state);
+	return state ? { kind: "checkpoint", state } : null;
 }
 
 export function cloneGoalState(state: GoalState | null): GoalState | null {
@@ -76,25 +92,235 @@ function cloneEvent(event: GoalEvent): GoalEvent {
 	return structuredClone(event);
 }
 
-function isGoalState(value: unknown): value is GoalState {
-	return (
-		isRecord(value) &&
-		value.version === 1 &&
-		typeof value.goalId === "string" &&
-		typeof value.objective === "string" &&
-		isGoalStatus(value.status)
-	);
+function parseGoalEvent(value: unknown): GoalEvent | null {
+	if (!isRecord(value)) return null;
+	const action = value.action;
+	const goalId = value.goalId;
+	const now = value.now;
+	if (typeof action !== "string" || typeof goalId !== "string") return null;
+	if (action !== "create" && typeof now !== "number") return null;
+	if (action === "create") {
+		return typeof value.objective === "string" && typeof now === "number"
+			? {
+					action,
+					goalId,
+					objective: value.objective,
+					now,
+					acceptanceCriteria: optionalStringArray(value.acceptanceCriteria),
+					sourcePaths: optionalStringArray(value.sourcePaths),
+					tokenBudget: optionalNumber(value.tokenBudget),
+					source: optionalEventSource(value.source),
+					explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+					causedBy: optionalString(value.causedBy),
+				}
+			: null;
+	}
+	if (action === "replace") {
+		return typeof value.objective === "string"
+			? {
+					action,
+					goalId,
+					objective: value.objective,
+					now: now as number,
+					acceptanceCriteria: optionalStringArray(value.acceptanceCriteria),
+					sourcePaths: optionalStringArray(value.sourcePaths),
+					tokenBudget: optionalNumber(value.tokenBudget),
+					source: optionalEventSource(value.source),
+					explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+					causedBy: optionalString(value.causedBy),
+				}
+			: null;
+	}
+	if (action === "edit") {
+		return optionalString(value.objective) === value.objective ||
+			value.objective === undefined
+			? {
+					action,
+					goalId,
+					now: now as number,
+					objective: optionalString(value.objective),
+					acceptanceCriteria: optionalStringArray(value.acceptanceCriteria),
+					sourcePaths: optionalStringArray(value.sourcePaths),
+					tokenBudget: optionalNumber(value.tokenBudget),
+					source: optionalEventSource(value.source),
+					explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+					causedBy: optionalString(value.causedBy),
+				}
+			: null;
+	}
+	if (action === "pause") {
+		return {
+			action,
+			goalId,
+			now: now as number,
+			reason: optionalString(value.reason) as never,
+			message: optionalString(value.message),
+			source: optionalEventSource(value.source),
+			explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+			causedBy: optionalString(value.causedBy),
+		};
+	}
+	if (action === "resume" || action === "clear" || action === "dismiss") {
+		return {
+			action,
+			goalId,
+			now: now as number,
+			source: optionalEventSource(value.source),
+			explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+			causedBy: optionalString(value.causedBy),
+		} as GoalEvent;
+	}
+	if (action === "complete") {
+		if (value.evidence !== undefined && typeof value.evidence !== "string") {
+			return null;
+		}
+		return {
+			action,
+			goalId,
+			now: now as number,
+			evidence: optionalString(value.evidence),
+			source: optionalEventSource(value.source),
+			explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+			causedBy: optionalString(value.causedBy),
+		};
+	}
+	if (action === "progress") {
+		return isRecord(value.progress)
+			? {
+					action,
+					goalId,
+					now: now as number,
+					progress: parseProgress(value.progress),
+					source: optionalEventSource(value.source),
+					explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+					causedBy: optionalString(value.causedBy),
+				}
+			: null;
+	}
+	if (action === "evaluation") {
+		return typeof value.reason === "string"
+			? {
+					action,
+					goalId,
+					now: now as number,
+					reason: value.reason,
+					usage: isRecord(value.usage) ? (value.usage as never) : undefined,
+					source: optionalEventSource(value.source),
+					explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+					causedBy: optionalString(value.causedBy),
+				}
+			: null;
+	}
+	if (action === "continuation") {
+		return typeof value.pending === "boolean"
+			? {
+					action,
+					goalId,
+					now: now as number,
+					pending: value.pending,
+					reason: optionalString(value.reason),
+					phase: optionalString(value.phase) as never,
+					error: optionalString(value.error),
+					mode: optionalString(value.mode) as never,
+					source: optionalEventSource(value.source),
+					explicitUserIntent: optionalBoolean(value.explicitUserIntent),
+					causedBy: optionalString(value.causedBy),
+				}
+			: null;
+	}
+	return null;
 }
 
-function isGoalEvent(value: unknown): value is GoalEvent {
-	return (
-		isRecord(value) &&
-		typeof value.action === "string" &&
-		typeof value.goalId === "string"
-	);
+function parseGoalState(value: unknown): GoalState | null {
+	if (
+		!isRecord(value) ||
+		value.version !== 1 ||
+		typeof value.goalId !== "string" ||
+		typeof value.objective !== "string" ||
+		!isGoalStatus(value.status)
+	) {
+		return null;
+	}
+	const progress = isRecord(value.progress) ? value.progress : {};
+	const usage = isRecord(value.usage) ? value.usage : {};
+	return {
+		...(value as object),
+		version: 1,
+		revision: typeof value.revision === "number" ? value.revision : 1,
+		goalId: value.goalId,
+		objective: value.objective,
+		status: value.status,
+		acceptanceCriteria: stringArray(value.acceptanceCriteria),
+		sourcePaths: stringArray(value.sourcePaths),
+		tokenBudget: optionalNumber(value.tokenBudget),
+		progress: {
+			done: stringArray(progress.done),
+			blocked: stringArray(progress.blocked),
+			current: optionalString(progress.current),
+			summary: optionalString(progress.summary) ?? "",
+		},
+		createdAt: numberOr(value.createdAt, 0),
+		updatedAt: numberOr(value.updatedAt, 0),
+		runStartedAt: numberOr(value.runStartedAt, 0),
+		evaluationTurns: numberOr(value.evaluationTurns, 0),
+		usage: {
+			input: numberOr(usage.input, 0),
+			output: numberOr(usage.output, 0),
+			cacheRead: numberOr(usage.cacheRead, 0),
+			cacheWrite: numberOr(usage.cacheWrite, 0),
+			total: numberOr(usage.total, 0),
+		},
+		lastEvaluationReason:
+			optionalString(value.lastEvaluationReason) ?? "Goal restored.",
+	} as GoalState;
 }
 
-function isGoalStatus(value: unknown): boolean {
+function parseProgress(value: Record<string, unknown>): Partial<GoalProgress> {
+	return {
+		done: optionalStringArray(value.done),
+		current: optionalString(value.current),
+		blocked: optionalStringArray(value.blocked),
+		summary: optionalString(value.summary),
+	};
+}
+
+function optionalString(value: unknown): string | undefined {
+	return typeof value === "string" ? value : undefined;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value)
+		? value
+		: undefined;
+}
+
+function optionalBoolean(value: unknown): boolean | undefined {
+	return typeof value === "boolean" ? value : undefined;
+}
+
+function optionalStringArray(value: unknown): string[] | undefined {
+	return Array.isArray(value) && value.every((item) => typeof item === "string")
+		? [...value]
+		: undefined;
+}
+
+function stringArray(value: unknown): string[] {
+	return optionalStringArray(value) ?? [];
+}
+
+function numberOr(value: unknown, fallback: number): number {
+	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function optionalEventSource(value: unknown) {
+	return value === "user-command" ||
+		value === "model-tool" ||
+		value === "runtime"
+		? value
+		: undefined;
+}
+
+function isGoalStatus(value: unknown): value is GoalState["status"] {
 	return value === "active" || value === "paused" || value === "complete";
 }
 

@@ -4,6 +4,7 @@ import type { GoalState } from "../src/types.js";
 
 const baseGoal: GoalState = {
 	version: 1,
+	revision: 1,
 	goalId: "g1",
 	objective: "ship the feature",
 	status: "active",
@@ -53,7 +54,14 @@ describe("validateGoalCompletion", () => {
 			),
 		).toEqual({
 			ok: false,
-			reason: "Completion evidence is required when acceptance criteria exist.",
+			reason: "Completion evidence is required.",
+		});
+	});
+
+	it("requires evidence even without acceptance criteria", () => {
+		expect(validateGoalCompletion(baseGoal, " ")).toEqual({
+			ok: false,
+			reason: "Completion evidence is required.",
 		});
 	});
 

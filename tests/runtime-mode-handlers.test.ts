@@ -37,6 +37,9 @@ describe("runtime mode handlers", () => {
 		const result = await handleBeforeAgentStart(harness.services);
 
 		expect(result?.message.details.goalId).toBe(active.goalId);
+		expect(result?.message.content).not.toContain("Observation token:");
+		expect(result?.message.details.capability?.observed).toBe(true);
+		expect(result?.message.content).toContain("Revision:");
 		expect(
 			loadGoalState(harness.runtimeCtx)?.continuationPendingAt,
 		).toBeUndefined();
@@ -105,6 +108,41 @@ describe("runtime mode handlers", () => {
 		expect(loadGoalState(harness.runtimeCtx)?.status).toBe("paused");
 		expect(harness.notifications.at(-1)?.message).toContain("Goal paused");
 	});
+	it("skips stale evaluator results when goal revision changes during evaluation", async () => {
+		const harness = createHarness();
+		const active = seedGoal(harness.branch);
+		harness.runtimeCtx.model = { provider: "custom", id: "model" };
+		harness.runtimeCtx.modelRegistry.getApiKeyAndHeaders = async () => {
+			saveGoalState(
+				harness.runtimePi,
+				{
+					action: "progress",
+					goalId: active.goalId,
+					now: 2,
+					progress: { summary: "mutated while evaluator awaited" },
+				},
+				active,
+			);
+			return { ok: false, error: "auth unavailable" };
+		};
+		const lock = { evaluatingGoalId: null as string | null };
+
+		await handleAgentEndWithLock(harness.services, { messages: [] }, lock);
+
+		expect(
+			harness.branch.filter(
+				(entry) =>
+					(entry.data as { action?: string } | undefined)?.action ===
+					"evaluation",
+			),
+		).toHaveLength(0);
+		expect(loadGoalState(harness.runtimeCtx)?.progress.summary).toBe(
+			"mutated while evaluator awaited",
+		);
+		expect(harness.notifications.at(-1)?.message).toContain(
+			"Skipped stale goal evaluation",
+		);
+	});
 });
 
 function createHarness(
@@ -131,8 +169,13 @@ function createHarness(
 			sentMessages.push({ prompt, options: messageOptions });
 		},
 	} satisfies RuntimeExtensionAPI;
+	const protocolContext = {
+		sessionId: "test-session",
+		branchId: "test-branch",
+	};
 	const runtimeCtx: GoalRuntimeContext = {
 		sessionManager: { getBranch: () => branch },
+		goalProtocol: protocolContext,
 		modelRegistry: {
 			find: () => undefined,
 			getApiKeyAndHeaders: async () => ({ ok: false }),
@@ -150,6 +193,7 @@ function createHarness(
 	const services: GoalRuntimeServices = {
 		runtimePi,
 		runtimeCtx,
+		protocolContext,
 		continuationGuard: createContinuationGuard(),
 	};
 	return {

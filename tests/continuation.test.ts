@@ -14,6 +14,7 @@ import type { GoalRuntimeContext } from "../src/runtime-types.js";
 
 const goal: GoalState = {
 	version: 1,
+	revision: 1,
 	goalId: "g1",
 	objective: "ship",
 	status: "active",
@@ -398,6 +399,7 @@ function makeCtx(
 ): GoalRuntimeContext {
 	return {
 		sessionManager: { getBranch: () => [] },
+		goalProtocol: { sessionId: "test-session", branchId: "test-branch" },
 		modelRegistry: {
 			find: () => undefined,
 			getApiKeyAndHeaders: async () => ({ ok: false }),

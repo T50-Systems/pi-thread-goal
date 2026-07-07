@@ -1,4 +1,9 @@
-import type { GoalEvent, GoalEventSource, GoalState, GoalStatus } from "./types.js";
+import type {
+	GoalEvent,
+	GoalEventSource,
+	GoalState,
+	GoalStatus,
+} from "./types.js";
 
 export type GoalOperationName = GoalEvent["action"];
 export type GoalStatusRequirement = GoalStatus | "none" | "any";
@@ -28,7 +33,9 @@ export interface GoalOperationContractResult {
 	violations: GoalOperationContractViolation[];
 }
 
-export function buildGoalOperationContract(event: GoalEvent): GoalOperationContract {
+export function buildGoalOperationContract(
+	event: GoalEvent,
+): GoalOperationContract {
 	const source = requiredSource(event);
 	const explicitUserIntent = requiredExplicitUserIntent(event);
 	const base = {
@@ -142,6 +149,13 @@ export function verifyGoalOperationContract(input: {
 	}
 	verifyStatus("before.status", before, contract.beforeStatus, violations);
 	verifyStatus("after.status", after, contract.afterStatus, violations);
+	verifyRevision(
+		"after.revision",
+		before,
+		after,
+		contract.afterStatus,
+		violations,
+	);
 	if (event.source !== contract.requiredSource) {
 		violations.push({
 			field: "event.source",
@@ -216,7 +230,9 @@ function requiredSource(event: GoalEvent): GoalEventSource {
 
 function requiredExplicitUserIntent(event: GoalEvent): boolean {
 	if (event.explicitUserIntent !== undefined) return event.explicitUserIntent;
-	throw new Error(`Goal ${event.action} event requires explicitUserIntent metadata.`);
+	throw new Error(
+		`Goal ${event.action} event requires explicitUserIntent metadata.`,
+	);
 }
 
 function verifyStatus(
@@ -241,6 +257,25 @@ function verifyStatus(
 		violations.push({
 			field,
 			reason: `Expected ${required}, received ${goal?.status ?? "none"}.`,
+		});
+	}
+}
+
+function verifyRevision(
+	field: string,
+	before: GoalState | null,
+	after: GoalState | null,
+	afterStatus: GoalStatusRequirement,
+	violations: GoalOperationContractViolation[],
+): void {
+	if (afterStatus === "none") return;
+	if (!after) return;
+	const expected =
+		before && before.goalId === after.goalId ? before.revision + 1 : 1;
+	if (after.revision !== expected) {
+		violations.push({
+			field,
+			reason: `Expected ${expected}, received ${after.revision}.`,
 		});
 	}
 }
