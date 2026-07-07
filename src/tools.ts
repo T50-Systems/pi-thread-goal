@@ -1,9 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import { validateGoalCompletion } from "./completion-policy.js";
+import { validateGoalCompletion } from "./policies.js";
 import { requireGoalProtocolContext } from "./goal-protocol.js";
-import { validateGoalProgressUpdate } from "./goal-progress-policy.js";
+import { validateGoalProgressUpdate } from "./policies.js";
 import { saveGoalOperation } from "./goal-operations.js";
 import {
 	authorizeGoalCompletion,

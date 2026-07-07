@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateGoalCompletion } from "../src/completion-policy.js";
+import { validateGoalCompletion } from "../src/policies.js";
 import type { GoalState } from "../src/types.js";
 
 const baseGoal: GoalState = {

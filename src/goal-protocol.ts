@@ -400,7 +400,7 @@ function capabilityMatchesGoal(
 	);
 }
 
-import { validateGoalCompletion } from "./completion-policy.js";
+import { validateGoalCompletion } from "./policies.js";
 
 export function observeGoal(input: {
 	context: GoalProtocolContext;
