@@ -27,7 +27,7 @@ describe("goal operation workflow adoption", () => {
 
 	it("routes mutating runtime files through saveGoalOperation", () => {
 		const files = [
-			"goal-command-handlers.ts",
+			"commands.ts",
 			"tools.ts",
 			"runtime-actions.ts",
 			"runtime-mode-handlers.ts",
