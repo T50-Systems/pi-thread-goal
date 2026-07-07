@@ -57,6 +57,10 @@ When a goal is active:
 - model tools with explicit guardrails
 - runaway protection: automatic continuation pauses after 25 evaluator turns without completion or when a configured token budget is reached
 - configurable token budget via `/goal <objective> --tokens 100k`
+- continuation delivery tracking records queued/sent/started/failed phases,
+  retry attempts, and stale pending state
+- stale continuation watchdog retries delivery with backoff and pauses with a
+  visible reason after repeated delivery failures
 - stale tool-call protection: progress/completion tools refuse to mutate paused or completed goals
 - retryable vs non-retryable evaluator error handling, with non-retryable failures pausing the goal for review
 - anti-contradictory completion validation before `complete_goal` can mark a goal complete
@@ -82,6 +86,7 @@ pi --no-extensions -e ./extensions/index.ts
 /goal
 /goal <objective> [--tokens 100k]
 /goal status
+/goal doctor
 /goal edit
 /goal pause
 /goal resume [--no-start]
@@ -95,6 +100,9 @@ pi --no-extensions -e ./extensions/index.ts
 `/goal edit` opens a structured editor for the objective, acceptance criteria, source paths, and token budget. Completed goals remain visible in the widget until `/goal dismiss` hides them.
 
 `/goal resume` reactivates a paused goal and starts the next goal turn by default. Use `/goal resume --no-start` only when you want to update the stored status/UI without enqueueing a continuation prompt.
+
+`/goal doctor` prints continuation diagnostics: pending phase, retry attempts,
+stale status, idle/pending-message probes, and a recommended recovery action.
 
 ## Model tools
 

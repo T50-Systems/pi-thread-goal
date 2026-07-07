@@ -83,6 +83,8 @@ export async function handleBeforeAgentStart(
 					goalId: goal.goalId,
 					now: Date.now(),
 					pending: false,
+					phase: "started",
+					reason: "Goal continuation started.",
 					source: "runtime",
 					explicitUserIntent: false,
 					causedBy: "before-agent-start:clear-pending-continuation",
@@ -102,11 +104,15 @@ export async function handleBeforeAgentStart(
 
 export async function handleContext(
 	event: ContextEvent,
-	runtimeCtx: GoalRuntimeContext,
+	services: GoalRuntimeServices,
 ): Promise<{ messages: ContextEvent["messages"] }> {
+	const { runtimePi, runtimeCtx, continuationGuard } = services;
 	const goal = loadGoalState(runtimeCtx);
+	retryPendingContinuation(runtimePi, runtimeCtx, continuationGuard, goal);
+	const refreshed = loadGoalState(runtimeCtx);
+	applyGoalUi(runtimeCtx, refreshed);
 	return {
-		messages: filterGoalContextMessages(event.messages, goal),
+		messages: filterGoalContextMessages(event.messages, refreshed),
 	};
 }
 
@@ -151,6 +157,7 @@ export async function handleSessionCompact(
 			goal,
 			"Context was compacted while an active goal remains. Continue from the persisted goal state instead of waiting for another user turn.",
 		),
+		reason: "Context compaction resume queued goal continuation.",
 	});
 }
 
@@ -178,6 +185,7 @@ export async function handleSessionStart(
 				goal,
 				"Resumed with an active goal. Continue working toward it.",
 			),
+			reason: "Session resumed with an active goal.",
 		});
 		return;
 	}

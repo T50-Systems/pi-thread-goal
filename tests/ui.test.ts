@@ -3,6 +3,8 @@ import {
 	applyGoalUi,
 	formatElapsedTime,
 	renderGoalOverlayLines,
+	renderContinuationStatus,
+	renderGoalDoctor,
 	renderGoalStatusLine,
 	renderGoalWidget,
 	setGoalWidgetExpanded,
@@ -107,6 +109,41 @@ describe("renderGoalStatusLine", () => {
 
 		expect(text).toBe("/goal active · Preparando PR para el issue #4.");
 		expect(text).not.toContain("Me gustaria");
+	});
+
+	it("surfaces pending continuation status before progress text", () => {
+		const now = 100_000;
+		vi.useFakeTimers();
+		vi.setSystemTime(now);
+		const pendingGoal = {
+			...baseGoal,
+			continuationPendingAt: now - 31_000,
+			continuationPhase: "sent" as const,
+			continuationAttempt: 1,
+			continuationLastMode: "immediate" as const,
+		};
+		const status = renderContinuationStatus(pendingGoal, now);
+		const text = renderGoalStatusLine(pendingGoal);
+
+		expect(status).toContain("sent for 31s");
+		expect(text).toContain("/goal active · sent for");
+		expect(text).toContain("attempt 1/3");
+	});
+
+	it("renders doctor recommendations for exhausted continuation delivery", () => {
+		const now = 500_000;
+		const text = renderGoalDoctor(
+			{
+				...baseGoal,
+				continuationPendingAt: now - 130_000,
+				continuationPhase: "sent",
+				continuationAttempt: 3,
+			},
+			{ isIdle: true, hasPendingMessages: false, now },
+		);
+
+		expect(text).toContain("Continuation attempt: 3/3");
+		expect(text).toContain("Continuation delivery limit reached");
 	});
 });
 

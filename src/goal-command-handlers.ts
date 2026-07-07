@@ -4,6 +4,15 @@ import {
 	parseGoalEditDocument,
 	renderGoalEditDocument,
 } from "./goal-edit-document.js";
+import {
+	createContinuationGuard,
+	queueGoalContinuation,
+} from "./continuation.js";
+import {
+	createPiContinuationStore,
+	createPiMessageQueue,
+	createPiNotifier,
+} from "./pi-continuation-ports.js";
 import { renderGoalStartPrompt } from "./prompts.js";
 import { loadGoalState, validateObjective } from "./state.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
@@ -13,6 +22,7 @@ import {
 	noGoalMessage,
 	nonInteractiveConfirmationMessage,
 	renderGoalSummary,
+	renderGoalDoctor,
 	setGoalWidgetExpanded,
 	showGoalOverlay,
 	toggleGoalWidgetExpanded,
@@ -31,6 +41,10 @@ export async function handleParsedGoalCommand(
 ): Promise<void> {
 	if (parsed.kind === "show" || parsed.kind === "status") {
 		await showGoalStatus(ctx);
+		return;
+	}
+	if (parsed.kind === "doctor") {
+		showGoalDoctor(ctx);
 		return;
 	}
 
@@ -84,6 +98,31 @@ async function showGoalStatus(ctx: GoalCommandContext): Promise<void> {
 		await showGoalOverlay(ctx, current);
 	} else {
 		ctx.ui.notify(renderGoalSummary(current), "info");
+	}
+}
+
+function showGoalDoctor(ctx: GoalCommandContext): void {
+	const current = loadGoalState(ctx);
+	if (!current) {
+		ctx.ui.notify(noGoalMessage("doctor"), "warning");
+		applyGoalUi(ctx, null);
+		return;
+	}
+	applyGoalUi(ctx, current);
+	ctx.ui.notify(
+		renderGoalDoctor(current, {
+			isIdle: readProbe(() => ctx.isIdle()),
+			hasPendingMessages: readProbe(() => ctx.hasPendingMessages?.()),
+		}),
+		"info",
+	);
+}
+
+function readProbe(probe: () => boolean | undefined): boolean | undefined {
+	try {
+		return probe();
+	} catch {
+		return undefined;
 	}
 }
 
@@ -396,14 +435,24 @@ async function confirmAction(
 
 export function startGoal(
 	pi: GoalActionAPI,
-	ctx: Pick<GoalCommandContext, "isIdle" | "ui">,
+	ctx: Pick<GoalCommandContext, "isIdle" | "hasPendingMessages" | "ui">,
 	goal: GoalState,
 ): void {
 	const prompt = renderGoalStartPrompt(goal);
-	if (ctx.isIdle()) {
-		pi.sendUserMessage(prompt);
-	} else {
-		pi.sendUserMessage(prompt, { deliverAs: "followUp" });
+	const queued = queueGoalContinuation({
+		ports: {
+			store: createPiContinuationStore(pi, ctx),
+			queue: createPiMessageQueue(pi),
+			notifier: createPiNotifier(ctx),
+		},
+		ctx,
+		guard: createContinuationGuard(),
+		goal,
+		prompt,
+		reason: "Manual /goal start requested.",
+		notification: "Goal turn started.",
+	});
+	if (!queued) {
+		ctx.ui.notify("Goal turn could not be started automatically.", "warning");
 	}
-	ctx.ui.notify("Goal turn started.", "info");
 }

@@ -21,6 +21,16 @@ export type GoalPauseReason =
 	| "token-budget"
 	| "error";
 
+export type GoalContinuationPhase =
+	| "queued"
+	| "sent"
+	| "started"
+	| "cleared"
+	| "failed"
+	| "stale-retry";
+
+export type GoalContinuationMode = "immediate" | "followUp";
+
 export interface GoalState {
 	version: 1;
 	goalId: string;
@@ -42,6 +52,13 @@ export interface GoalState {
 	dismissedAt?: number;
 	continuationPendingAt?: number;
 	continuationReason?: string;
+	continuationPhase?: GoalContinuationPhase;
+	continuationAttempt?: number;
+	continuationFailures?: number;
+	continuationLastError?: string;
+	continuationLastMode?: GoalContinuationMode;
+	continuationLastSentAt?: number;
+	continuationLastStartedAt?: number;
 }
 
 export type GoalEventSource =
@@ -135,7 +152,10 @@ export interface GoalContinuationEvent extends GoalEventMetadata {
 	goalId: string;
 	now: number;
 	pending: boolean;
+	phase?: GoalContinuationPhase;
 	reason?: string;
+	mode?: GoalContinuationMode;
+	error?: string;
 }
 
 export type GoalEvent =

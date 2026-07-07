@@ -8,6 +8,12 @@ import {
 	wrapPlainText,
 } from "./ui-formatting.js";
 export { formatElapsedTime } from "./ui-formatting.js";
+import {
+	getContinuationRetryDelayMs,
+	hasReachedContinuationDeliveryLimit,
+	hasStalePendingContinuation,
+	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
+} from "./continuation.js";
 import type { GoalState } from "./types.js";
 
 let goalWidgetExpanded = false;
@@ -20,6 +26,7 @@ export const GOAL_USAGE = [
 	"Usage:",
 	"  /goal <objective> [--tokens 100k]",
 	"  /goal status",
+	"  /goal doctor",
 	"  /goal edit",
 	"  /goal pause|resume [--no-start]",
 	"  /goal start",
@@ -58,6 +65,12 @@ export interface GoalUiContext {
 interface GoalOverlayTheme {
 	fg?(color: string, text: string): string;
 	bold?(text: string): string;
+}
+
+export interface GoalDoctorRuntimeSnapshot {
+	isIdle?: boolean;
+	hasPendingMessages?: boolean;
+	now?: number;
 }
 
 export function applyGoalUi(ctx: GoalUiContext, goal: GoalState | null): void {
@@ -153,6 +166,8 @@ export function renderGoalSummary(goal: GoalState): string {
 		`Last evaluator reason: ${goal.lastEvaluationReason}`,
 		`Progress: ${goal.progress.summary || "No progress recorded yet."}`,
 	];
+	const continuation = renderContinuationStatus(goal);
+	if (continuation) lines.push(`Continuation: ${continuation}`);
 	if (goal.progress.current) lines.push(`Current: ${goal.progress.current}`);
 	if (goal.progress.blocked.length > 0)
 		lines.push(`Blocked: ${goal.progress.blocked.join("; ")}`);
@@ -174,7 +189,10 @@ export function renderGoalStatusLine(goal: GoalState): string {
 	} else if (goal.status === "paused") {
 		prefix = "/goal paused";
 	}
-	const detail = goal.progress.current || goal.progress.summary;
+	const detail =
+		renderContinuationStatus(goal) ||
+		goal.progress.current ||
+		goal.progress.summary;
 	return detail ? `${prefix} · ${truncate(detail, 56)}` : prefix;
 }
 
@@ -185,6 +203,8 @@ export function renderGoalWidget(goal: GoalState, expanded = false): string[] {
 		truncate(goal.objective, 72),
 		`Turns ${goal.evaluationTurns} · Time ${formatElapsedTime(goal.runStartedAt)} · Tokens ${formatTokenSpend(goal)}`,
 	];
+	const continuation = renderContinuationStatus(goal);
+	if (continuation) lines.push(`Continuation: ${truncate(continuation, 72)}`);
 	if (goal.progress.current) {
 		lines.push(`Now: ${truncate(goal.progress.current, 72)}`);
 	} else if (goal.progress.summary) {
@@ -272,12 +292,17 @@ export function renderGoalOverlayLines(
 		`Turns ${goal.evaluationTurns} · Time ${elapsed} · Tokens ${formatTokenSpend(goal)}`,
 		"muted",
 	);
+	const continuation = renderContinuationStatus(goal);
+	if (continuation)
+		addWrappedRow(" ", `Continuation: ${continuation}`, "warning");
 	addWrappedRow(" ", headline, "text");
 
 	if (expanded) {
 		row("");
 		addWrappedRow(" ", `Running: ${elapsed}`, "muted");
 		addWrappedRow(" ", `Last evaluator: ${goal.lastEvaluationReason}`, "muted");
+		if (continuation)
+			addWrappedRow(" ", `Continuation: ${continuation}`, "warning");
 		if (goal.pauseReason)
 			addWrappedRow(
 				" ",
@@ -321,6 +346,98 @@ export function renderGoalOverlayLines(
 	);
 	lines.push(fg("border", `╰${"─".repeat(innerWidth)}╯`));
 	return lines;
+}
+
+export function renderGoalDoctor(
+	goal: GoalState,
+	runtime: GoalDoctorRuntimeSnapshot = {},
+): string {
+	const now = runtime.now ?? Date.now();
+	const continuation = renderContinuationStatus(goal, now);
+	const idle = formatProbe(runtime.isIdle);
+	const hasPendingMessages = formatProbe(runtime.hasPendingMessages);
+	const lines = [
+		"Goal doctor",
+		`Status: ${goal.status}`,
+		`Objective: ${goal.objective}`,
+		`Runtime idle: ${idle}`,
+		`Runtime pending messages: ${hasPendingMessages}`,
+		`Continuation phase: ${goal.continuationPhase ?? "none"}`,
+		`Continuation attempt: ${goal.continuationAttempt ?? 0}/${MAX_CONTINUATION_DELIVERY_ATTEMPTS}`,
+		`Continuation failures: ${goal.continuationFailures ?? 0}`,
+		`Continuation mode: ${goal.continuationLastMode ?? "none"}`,
+		`Continuation pending: ${continuation ?? "none"}`,
+		goal.continuationLastError
+			? `Last continuation error: ${goal.continuationLastError}`
+			: undefined,
+		`Recommendation: ${renderGoalDoctorRecommendation(goal, runtime, now)}`,
+	];
+	return lines.filter((line): line is string => Boolean(line)).join("\n");
+}
+
+export function renderContinuationStatus(
+	goal: GoalState,
+	now = Date.now(),
+): string | undefined {
+	if (typeof goal.continuationPendingAt !== "number") return undefined;
+	const age = formatElapsedTime(goal.continuationPendingAt, now);
+	const phase = goal.continuationPhase ?? "pending";
+	const attempt = goal.continuationAttempt ?? 0;
+	const retryIn = Math.max(
+		0,
+		getContinuationRetryDelayMs(goal) - (now - goal.continuationPendingAt),
+	);
+	const parts = [
+		`${phase} for ${age}`,
+		attempt > 0
+			? `attempt ${attempt}/${MAX_CONTINUATION_DELIVERY_ATTEMPTS}`
+			: undefined,
+		goal.continuationLastMode ? `mode ${goal.continuationLastMode}` : undefined,
+		renderContinuationRetryState(goal, now, retryIn),
+	];
+	return parts.filter(Boolean).join(" · ");
+}
+
+function renderContinuationRetryState(
+	goal: GoalState,
+	now: number,
+	retryIn: number,
+): string {
+	if (!hasStalePendingContinuation(goal, now)) {
+		return `next retry in ${formatElapsedTime(now, now + retryIn)}`;
+	}
+	return hasReachedContinuationDeliveryLimit(goal)
+		? "delivery limit reached"
+		: "stale; retry eligible";
+}
+
+function renderGoalDoctorRecommendation(
+	goal: GoalState,
+	runtime: GoalDoctorRuntimeSnapshot,
+	now: number,
+): string {
+	if (goal.status === "complete")
+		return "Goal is complete; no continuation needed.";
+	if (goal.status === "paused")
+		return "Goal is paused; inspect pause reason or run /goal resume.";
+	if (runtime.hasPendingMessages === true)
+		return "Pi already has pending messages; avoid injecting a duplicate continuation.";
+	if (runtime.isIdle === false)
+		return "Pi is not idle; continuation should be delivered as follow-up.";
+	if (typeof goal.continuationPendingAt !== "number")
+		return "No continuation is pending; /goal start can kick off a new turn.";
+	if (
+		hasReachedContinuationDeliveryLimit(goal) &&
+		hasStalePendingContinuation(goal, now)
+	)
+		return "Continuation delivery limit reached; runtime should pause instead of staying active.";
+	if (hasStalePendingContinuation(goal, now))
+		return "Continuation is stale; watchdog should retry now.";
+	return "Continuation is pending; wait for the watchdog window before retrying.";
+}
+
+function formatProbe(value: boolean | undefined): string {
+	return value === undefined ? "unknown" : String(value);
 }
 
 function toOverlayTheme(value: unknown): GoalOverlayTheme | undefined {
