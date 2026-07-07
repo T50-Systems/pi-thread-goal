@@ -9,6 +9,7 @@ import type { GoalState } from "../src/types.js";
 
 const batchGoal: GoalState = {
   version: 1,
+	revision: 1,
   goalId: "g1",
   objective: "Trabaja uno a uno todos los issues abiertos hasta terminarlos",
   status: "active",

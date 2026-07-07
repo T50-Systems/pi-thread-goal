@@ -33,6 +33,7 @@ export type GoalContinuationMode = "immediate" | "followUp";
 
 export interface GoalState {
 	version: 1;
+	revision: number;
 	goalId: string;
 	objective: string;
 	status: GoalStatus;

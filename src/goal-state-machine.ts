@@ -51,6 +51,7 @@ export function reduceGoalStateMachine(
 			if (!current) return current;
 			return {
 				...current,
+				revision: nextRevision(current),
 				objective:
 					event.objective === undefined
 						? current.objective
@@ -74,6 +75,7 @@ export function reduceGoalStateMachine(
 			if (!current) return current;
 			return {
 				...current,
+				revision: nextRevision(current),
 				status: "paused",
 				updatedAt: event.now,
 				pauseReason: event.reason ?? "manual",
@@ -86,6 +88,7 @@ export function reduceGoalStateMachine(
 			if (!current) return current;
 			return {
 				...current,
+				revision: nextRevision(current),
 				status: "active",
 				updatedAt: event.now,
 				runStartedAt: event.now,
@@ -110,6 +113,7 @@ export function reduceGoalStateMachine(
 			if (!current) return current;
 			return {
 				...current,
+				revision: nextRevision(current),
 				status: "complete",
 				updatedAt: event.now,
 				completedAt: event.now,
@@ -131,12 +135,18 @@ export function reduceGoalStateMachine(
 			};
 		case "dismiss":
 			return current
-				? { ...current, updatedAt: event.now, dismissedAt: event.now }
+				? {
+						...current,
+						revision: nextRevision(current),
+						updatedAt: event.now,
+						dismissedAt: event.now,
+					}
 				: current;
 		case "progress":
 			return current
 				? {
 						...current,
+						revision: nextRevision(current),
 						updatedAt: event.now,
 						progress: normalizeProgress(event.progress, current.progress),
 					}
@@ -145,6 +155,7 @@ export function reduceGoalStateMachine(
 			return current
 				? {
 						...current,
+						revision: nextRevision(current),
 						updatedAt: event.now,
 						evaluationTurns: current.evaluationTurns + 1,
 						lastEvaluationReason:
@@ -182,6 +193,7 @@ function reduceContinuationState(
 	if (!event.pending) {
 		return {
 			...current,
+			revision: nextRevision(current),
 			updatedAt: event.now,
 			continuationPendingAt: undefined,
 			continuationReason: undefined,
@@ -194,6 +206,7 @@ function reduceContinuationState(
 
 	return {
 		...current,
+		revision: nextRevision(current),
 		updatedAt: event.now,
 		continuationPendingAt: event.now,
 		continuationReason: reason,
@@ -206,4 +219,8 @@ function reduceContinuationState(
 		continuationLastSentAt:
 			phase === "sent" ? event.now : current.continuationLastSentAt,
 	};
+}
+
+function nextRevision(current: GoalState): number {
+	return current.revision + 1;
 }

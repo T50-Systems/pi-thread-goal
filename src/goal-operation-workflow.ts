@@ -1,6 +1,7 @@
 import { GOAL_CUSTOM_TYPE } from "./goal-state-store.js";
 import { cloneGoalState } from "./goal-state-snapshot.js";
 import { reduceGoalStateMachine } from "./goal-state-machine.js";
+import { invalidateGoalProtocolCapabilities } from "./goal-protocol-tokens.js";
 import {
 	buildGoalOperationContract,
 	verifyGoalOperationContract,
@@ -45,6 +46,10 @@ export function executeGoalOperation(input: {
 
 	const entry = toContractedGoalStateEntry(input.event, after);
 	input.pi.appendEntry(GOAL_CUSTOM_TYPE, entry);
+	invalidateGoalProtocolCapabilities(input.event.goalId);
+	if (input.before?.goalId && input.before.goalId !== input.event.goalId) {
+		invalidateGoalProtocolCapabilities(input.before.goalId);
+	}
 	return { ok: true, state: entry.state, entry };
 }
 

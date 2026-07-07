@@ -191,6 +191,7 @@ describe("goal edit document", () => {
 	it("renders and parses objective, criteria, and paths", () => {
 		const document = renderGoalEditDocument({
 			version: 1,
+	revision: 1,
 			goalId: "g1",
 			objective: "ship goal editing",
 			status: "active",
@@ -219,6 +220,7 @@ describe("goal edit document", () => {
 	it("renders and parses token budget", () => {
 		const document = renderGoalEditDocument({
 			version: 1,
+	revision: 1,
 			goalId: "g1",
 			objective: "ship goal editing",
 			status: "active",

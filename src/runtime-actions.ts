@@ -18,6 +18,7 @@ import { loadGoalState } from "./state.js";
 import { saveGoalOperation } from "./goal-operation-workflow.js";
 import { validateGoalStateInvariant } from "./state-invariants.js";
 import { applyGoalUi } from "./ui.js";
+import type { GoalProtocolContext } from "./goal-protocol-context.js";
 import type { GoalState } from "./types.js";
 import type {
 	GoalRuntimeContext,
@@ -27,8 +28,14 @@ import type {
 export interface GoalRuntimeServices {
 	runtimePi: RuntimeExtensionAPI;
 	runtimeCtx: GoalRuntimeContext;
+	protocolContext: GoalProtocolContext;
 	continuationGuard: ReturnType<typeof createContinuationGuard>;
 }
+
+type GoalRuntimeMutationServices = Pick<
+	GoalRuntimeServices,
+	"runtimePi" | "runtimeCtx" | "continuationGuard"
+>;
 
 export function applyGoalAction(
 	services: GoalRuntimeServices,
@@ -102,7 +109,7 @@ export function applyGoalAction(
 }
 
 export function pauseGoal(
-	services: GoalRuntimeServices,
+	services: GoalRuntimeMutationServices,
 	goal: GoalState,
 	options: {
 		reason: "error" | "token-budget" | "turn-limit";

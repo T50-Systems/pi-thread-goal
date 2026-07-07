@@ -7,6 +7,7 @@ const usage = { input: 1, output: 2, cacheRead: 3, cacheWrite: 4, total: 10 };
 
 const activeGoal: GoalState = {
 	version: 1,
+	revision: 1,
 	goalId: "g1",
 	objective: "ship",
 	status: "active",
