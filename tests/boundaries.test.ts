@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const srcDir = join(process.cwd(), "src");
 
@@ -33,27 +33,52 @@ describe("source boundaries", () => {
 		expect(source).not.toMatch(/sendUserMessage/);
 	});
 
-	it("keeps the Pi AI compat import isolated in the evaluator adapter", () => {
+	it("keeps the Pi AI compat import isolated in the evaluator module", () => {
 		const matches = sourceFiles().flatMap((path) =>
 			readFileSync(path, "utf8").includes("@earendil-works/pi-ai/compat")
 				? [relativeSourcePath(path)]
 				: [],
 		);
 
-		expect(matches).toEqual(["/src/evaluator-adapter.ts"]);
+		expect(matches).toEqual(["/src/evaluator.ts"]);
 	});
 
-	it("keeps next-action independent from tool-facing modules", () => {
-		const source = readSource("src/next-action.ts");
+	it("keeps policies independent from tool-facing modules", () => {
+		const source = readSource("src/policies.ts");
 		expect(source).not.toMatch(/from ["']\.\/tools\.js["']/);
 	});
 
-	it("keeps pure policy modules independent from adapters and runtime orchestration", () => {
-		const policyFiles = sourceFiles().filter((path) =>
-			path.endsWith("-policy.ts"),
-		);
-		for (const path of policyFiles) {
-			const source = readFileSync(path, "utf8");
+	it("keeps pure domain modules independent from adapters and runtime orchestration", () => {
+		// Modules that are allowed to touch adapters, Pi infrastructure, or
+		// runtime orchestration, and are covered by their own dedicated
+		// boundary tests elsewhere in this file (or are the composition
+		// root / Pi-facing registration surfaces). Everything else in src/
+		// is assumed to be pure domain logic and is checked automatically,
+		// so a new pure module cannot silently escape this check.
+		const adapterOrRuntimeModules = new Set([
+			"commands.ts",
+			"continuation.ts",
+			"evaluator.ts",
+			"goal-operations.ts",
+			"goal-state-persistence.ts",
+			"index.ts",
+			"pi-continuation-ports.ts",
+			"runtime-actions.ts",
+			"runtime-mode-handlers.ts",
+			"runtime-types.ts",
+			"runtime.ts",
+			"tools.ts",
+			"types.ts",
+			"ui.ts",
+		]);
+		const pureModules = readdirSync(srcDir)
+			.filter((entry) => entry.endsWith(".ts"))
+			.filter((entry) => !adapterOrRuntimeModules.has(entry));
+
+		expect(pureModules.length).toBeGreaterThan(0);
+		for (const entry of pureModules) {
+			const path = `src/${entry}`;
+			const source = readSource(path);
 			expect(source, path).not.toMatch(/adapter/i);
 			expect(source, path).not.toMatch(/from ["']\.\/runtime\.js["']/);
 			expect(source, path).not.toMatch(/@earendil-works/);
@@ -67,15 +92,6 @@ describe("source boundaries", () => {
 		expect(source).not.toMatch(/function handleAgentEnd/);
 		expect(source).not.toMatch(/saveGoalState/);
 		expect(source).not.toMatch(/evaluateGoal/);
-	});
-
-	it("keeps state.ts as a compatibility facade", () => {
-		const source = readSource("src/state.ts");
-		expect(source).toMatch(/from "\.\/goal-state-reducer\.js"/);
-		expect(source).toMatch(/from "\.\/goal-state-snapshot\.js"/);
-		expect(source).toMatch(/from "\.\/goal-state-store\.js"/);
-		expect(source).not.toMatch(/function reduceGoalState/);
-		expect(source).not.toMatch(/function createGoalStateSnapshot/);
 	});
 
 	it("keeps continuation application logic free of Pi persistence/message adapters", () => {

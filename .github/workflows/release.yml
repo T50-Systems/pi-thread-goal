@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Publish
+        if: ${{ env.NODE_AUTH_TOKEN != '' }}
+        run: npm publish --provenance --access public
+
+      - name: Skip publish
+        if: ${{ env.NODE_AUTH_TOKEN == '' }}
+        run: |
+          echo "### :warning: Publish skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tag \`${{ github.ref_name }}\` was pushed but \`NPM_TOKEN\` is not configured, so \`npm publish\` did not run." >> "$GITHUB_STEP_SUMMARY"
+          echo "Configure the \`NPM_TOKEN\` repository secret and re-run this workflow to publish." >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::NPM_TOKEN is not configured; skipping npm publish for ${{ github.ref_name }}."

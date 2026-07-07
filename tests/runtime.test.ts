@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-	filterGoalContextMessages,
-	shouldResumeGoalAfterCompaction,
-} from "../src/runtime.js";
-import {
 	shouldResumeGoalAfterSessionStart,
 	shouldRetryPendingContinuation,
 } from "../src/continuation.js";
+import {
+	filterGoalContextMessages,
+	shouldResumeGoalAfterCompaction,
+} from "../src/runtime.js";
 import type { GoalState } from "../src/types.js";
 
 const goal: GoalState = {

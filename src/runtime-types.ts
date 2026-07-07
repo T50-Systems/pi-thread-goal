@@ -1,4 +1,4 @@
-import type { GoalProtocolContext } from "./goal-protocol-context.js";
+import type { GoalProtocolContext } from "./goal-protocol.js";
 import type { EvaluatorDecision } from "./types.js";
 
 export interface GoalRuntimeContext {

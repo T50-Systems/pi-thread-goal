@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildGoalOperationContract } from "../src/goal-operation-contracts.js";
-import { executeGoalOperation, saveGoalOperation } from "../src/goal-operation-workflow.js";
+import {
+	buildGoalOperationContract,
+	executeGoalOperation,
+	saveGoalOperation,
+} from "../src/goal-operations.js";
 import type { GoalEvent, GoalState } from "../src/types.js";
 
 const usage = { input: 1, output: 2, cacheRead: 3, cacheWrite: 4, total: 10 };
