@@ -1,5 +1,22 @@
 # Worklog
 
+## 2026-07-07
+
+### Module consolidation
+- merged 41 source modules into 19 without behavior changes, one cluster per commit:
+  - `evaluator.ts` absorbed the provider port, policy, pi-ai compat adapter, and Pi provider
+  - `commands.ts` absorbed `goal-command-handlers` and `goal-edit-document`, removing the commands/handlers import cycle
+  - `goal-state.ts` absorbed the state machine, reducer alias, normalizers, transition policy, and invariants
+  - `goal-state-persistence.ts` absorbed the snapshot and store; the `state.ts` facade was removed
+  - `goal-protocol.ts` absorbed context, types, tokens, guards, and policy
+  - `goal-operations.ts` absorbed operation contracts and workflow
+  - `continuation.ts` absorbed the pure continuation port interfaces; `pi-continuation-ports.ts` stays a separate adapter
+  - `runtime-mode-handlers.ts` absorbed `runtime-guards`; `runtime.ts` remains a thin composition root and `runtime-types.ts` the shared contract
+  - `policies.ts` absorbed completion policy, progress policy, and next-action
+  - `ui.ts` absorbed `ui-formatting`
+- retargeted `tests/boundaries.test.ts` at the consolidated modules; the pi-ai compat isolation, pure-module purity, composition-root, and adapter/service boundaries are still enforced
+- verification after every cluster: `npm run typecheck` and `npm test` (144 tests)
+
 ## 2026-07-01
 
 ### Goal status custom UI
