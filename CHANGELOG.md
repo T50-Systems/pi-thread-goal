@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.4.0 - 2026-07-07
+
 ### Added
 
 - `/goal doctor` reports continuation phase, retry attempts, stale state, and
