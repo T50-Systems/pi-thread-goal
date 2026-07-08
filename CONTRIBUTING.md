@@ -25,11 +25,28 @@ Biome owns formatting and linting. Keep the existing style: tabs, double quotes,
 
 ## Tests
 
-Run the full suite with `npm test`. The in-process E2E smoke test for `/goal` auto-continuation can be run directly with:
+Run the full suite with `npm test`. It is fast, deterministic, and offline.
 
-```bash
-npm test -- tests/e2e-smoke.test.ts
-```
+The suite is layered so that runtime assumptions are checked against the real
+Pi host, not just hand-built fakes:
+
+- **Unit / in-process** — most of `tests/`, including the `/goal`
+  auto-continuation smoke (`npm test -- tests/e2e-smoke.test.ts`).
+- **Real-runtime harness** (`tests/pi-runtime.e2e.test.ts`) — drives the
+  extension against Pi's actual `SessionManager`, so `sessionId`, `leafId`, and
+  `getBranch` behave like a live session. Runs as part of `npm test`.
+- **Live end-to-end** (`tests/pi-live.e2e.test.ts`) — launches a real Pi
+  session with a real model and completes a goal through the tools. It is
+  opt-in (needs a configured provider and makes billable model calls) and is
+  skipped by default. Run it before cutting a release:
+
+  ```bash
+  npm run test:e2e-pi
+  ```
+
+When adding fakes for the Pi context, keep them adversarial (advancing
+`leafId`, no host-provided `goalProtocol`) rather than convenient — both
+past runtime bugs slipped through fakes that were too forgiving.
 
 ## Commits
 
