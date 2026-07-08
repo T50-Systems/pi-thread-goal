@@ -46,22 +46,23 @@ export function requireGoalProtocolContext(
 		return explicit;
 	}
 
-	// Otherwise derive the context from Pi's session manager. The session id
-	// scopes the in-memory capability cache per session; the current branch
-	// leaf keeps goals on different branches (via /tree or forks) from sharing
-	// observations. The leaf advances per entry, but the protocol epoch is
-	// reset on session_start and session_tree, so that churn does not leak
-	// capabilities across branches.
+	// Otherwise derive the context from Pi's session manager.
 	const sessionId = context.sessionManager?.sessionId;
 	if (typeof sessionId !== "string" || sessionId.trim().length === 0) {
 		throw new Error(
 			"Goal protocol requires a session id; none was provided by the Pi session manager.",
 		);
 	}
-	const leafId = context.sessionManager?.leafId;
-	const branchId =
-		typeof leafId === "string" && leafId.trim().length > 0 ? leafId : sessionId;
-	return { sessionId, branchId };
+	// branchId must stay stable across the get_goal -> prepare_goal_completion
+	// -> complete_goal handshake, which spans several tool calls within one
+	// turn. Pi's sessionManager.leafId advances on every appended entry, so
+	// using it here would move the capability key between get_goal and the
+	// mutating tool and reject it with "Call get_goal before mutating goal
+	// state." Cross-branch isolation does not need the leaf: switching branches
+	// fires session_start / session_tree, which resets the protocol epoch, and
+	// the capability validation independently checks goalId + revision + epoch.
+	// So the session id is both a stable and a safe branch scope.
+	return { sessionId, branchId: sessionId };
 }
 
 export type GoalProtocolState =
