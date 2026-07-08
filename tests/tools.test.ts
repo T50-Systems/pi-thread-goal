@@ -107,6 +107,27 @@ describe("registered goal tools", () => {
 		);
 	});
 
+	it("documents get_goal before every goal-state mutation", () => {
+		const tools = new Map<string, any>();
+		registerGoalTools({
+			registerTool: (tool: any) => tools.set(tool.name, tool),
+			appendEntry: vi.fn(),
+		} as any);
+
+		expect(tools.get("get_goal").promptSnippet).toContain(
+			"Call get_goal immediately before update_goal_progress",
+		);
+		expect(
+			tools.get("update_goal_progress").promptGuidelines.join("\n"),
+		).toContain("After update_goal_progress succeeds, call get_goal again");
+		expect(tools.get("prepare_goal_completion").promptSnippet).toContain(
+			"if update_goal_progress just ran, call get_goal again first",
+		);
+		expect(tools.get("complete_goal").promptGuidelines.join("\n")).toContain(
+			"If update_goal_progress ran earlier in the turn, call get_goal again",
+		);
+	});
+
 	it("warns when blocked entries look like technical risk", async () => {
 		const tools = new Map<string, any>();
 		const branchEntries: any[] = [

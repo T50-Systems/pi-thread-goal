@@ -91,10 +91,10 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 		description:
 			"Read the current /goal state and register a fresh protocol observation capability.",
 		promptSnippet:
-			"Use get_goal before mutating a goal when you do not already have a fresh observation in this context.",
+			"Call get_goal immediately before update_goal_progress, prepare_goal_completion, or complete_goal; call it again after any goal mutation before the next mutation.",
 		promptGuidelines: [
 			"Use get_goal only when the persisted /goal state is needed; do not narrate the internal lookup to the user.",
-			"After get_goal observes an active goal, update_goal_progress and prepare_goal_completion can use the internal observation capability for this context.",
+			"Every goal-state mutation needs a fresh observation for the current goal revision: get_goal -> update_goal_progress, and after update_goal_progress call get_goal again before prepare_goal_completion or complete_goal.",
 		],
 		parameters: getGoalParams,
 		async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
@@ -170,9 +170,10 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 		description:
 			"Validate completion evidence and register a short-lived completion candidate.",
 		promptSnippet:
-			"Call prepare_goal_completion with evidence before complete_goal.",
+			"Call get_goal in this same turn before prepare_goal_completion; if update_goal_progress just ran, call get_goal again first.",
 		promptGuidelines: [
 			"Use prepare_goal_completion only when evidence shows the current objective is complete.",
+			"Call get_goal immediately before prepare_goal_completion unless you have already observed the current goal revision after the last mutation.",
 			"Do not call complete_goal until prepare_goal_completion succeeds for the same evidence.",
 		],
 		parameters: prepareGoalCompletionParams,
@@ -203,9 +204,10 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 		description:
 			"Mark the active goal complete only with a fresh internal completion candidate.",
 		promptSnippet:
-			"Use complete_goal only after prepare_goal_completion succeeds for the same evidence.",
+			"Use complete_goal only after get_goal and prepare_goal_completion succeed for the same current goal revision and evidence.",
 		promptGuidelines: [
-			"Call get_goal, then prepare_goal_completion with evidence, then complete_goal with the same evidence.",
+			"Completion flow is get_goal -> prepare_goal_completion with evidence -> complete_goal with the same evidence.",
+			"If update_goal_progress ran earlier in the turn, call get_goal again before prepare_goal_completion because progress updates change the goal revision.",
 			"Do not use complete_goal to stop work early or to pause a goal.",
 			"Resolve blockers and update current progress before preparing completion.",
 		],
@@ -255,13 +257,14 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 		description:
 			"Update execution progress for the active goal with a fresh internal observation capability.",
 		promptSnippet:
-			"Use update_goal_progress after get_goal has observed the active goal in this context.",
+			"Use update_goal_progress only immediately after get_goal has observed the active goal in this same turn.",
 		promptGuidelines: [
+			"Mutation flow is get_goal -> update_goal_progress. Do not call update_goal_progress from stale goal context alone.",
+			"After update_goal_progress succeeds, call get_goal again before any later prepare_goal_completion, complete_goal, or update_goal_progress call because the revision changed.",
 			"Use update_goal_progress to update done/current/blocked/summary for the active goal.",
 			"Use blocked only for real operational blockers: no useful next action remains without a user, runtime, or external decision. Put risks, uncertainty, and difficult-but-actionable work in current/summary instead.",
 			"For ongoing batch goals, after noting progress choose the next unfinished item and continue rather than giving a status-only response.",
 			"Do not use update_goal_progress to rewrite the goal objective itself.",
-			"Call get_goal first if this context has not freshly observed the goal.",
 		],
 		parameters: updateGoalProgressParams,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {

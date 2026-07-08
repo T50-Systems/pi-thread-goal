@@ -49,6 +49,25 @@ describe("goal prompts", () => {
 		expect(continuation).toContain("choose the next unfinished item");
 	});
 
+	it("documents get_goal before each goal-state mutation", () => {
+		const context = renderGoalContext(batchGoal);
+		const start = renderGoalStartPrompt(batchGoal);
+		const continuation = renderGoalContinuationPrompt(batchGoal, "continue");
+
+		expect(context).toContain(
+			"Before every goal-state mutation, call get_goal",
+		);
+		expect(context).toContain("get_goal -> update_goal_progress");
+		expect(context).toContain(
+			"call get_goal again first because update_goal_progress changed the goal revision",
+		);
+		expect(start).toContain("after any progress update call get_goal again");
+		expect(continuation).toContain("use get_goal -> update_goal_progress");
+		expect(continuation).toContain(
+			"call get_goal again first because the progress update changed the goal revision",
+		);
+	});
+
 	it("tells the evaluator that one completed issue is not enough for a batch goal", () => {
 		const prompt = renderGoalEvaluationPrompt(batchGoal);
 

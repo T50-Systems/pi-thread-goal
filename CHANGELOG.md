@@ -26,6 +26,9 @@
 - added runtime checkpoint-only stop detection, blocker classification warnings,
   and continuation retry fallback diagnostics so unmet goals continue with clearer
   reasons and stale delivery retries alternate transport modes before pausing.
+- clarified caller flow for goal mutations: agents must use `get_goal ->
+  update_goal_progress`, and after any progress mutation call `get_goal` again
+  before completion or another mutation because the goal revision changed.
 
 ## 0.5.2 - 2026-07-07
 
