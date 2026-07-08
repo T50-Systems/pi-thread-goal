@@ -12,7 +12,7 @@ Pi-native Claude-style `/goal` for Pi.
 
 ## Status
 
-- current version: `0.5.1`
+- current version: `0.5.2`
 - language: TypeScript
 - runtime: Pi extension package
 - maturity: usable early release
