@@ -37,15 +37,22 @@ jobs:
       - name: Test
         run: npm test
 
+      # npm publishing is opt-in. This package is distributed via git tag
+      # pins (git:github.com/T50-Systems/pi-thread-goal@vX.Y.Z), so the
+      # default release path only builds and verifies. To also publish to
+      # npm, set the repository variable PUBLISH_TO_NPM=true and configure
+      # the NPM_TOKEN secret with create/publish rights for this package.
       - name: Publish
-        if: ${{ env.NODE_AUTH_TOKEN != '' }}
+        if: ${{ vars.PUBLISH_TO_NPM == 'true' && env.NODE_AUTH_TOKEN != '' }}
         run: npm publish --provenance --access public
 
       - name: Skip publish
-        if: ${{ env.NODE_AUTH_TOKEN == '' }}
+        if: ${{ vars.PUBLISH_TO_NPM != 'true' || env.NODE_AUTH_TOKEN == '' }}
         run: |
-          echo "### :warning: Publish skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "### :information_source: npm publish skipped" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Tag \`${{ github.ref_name }}\` was pushed but \`NPM_TOKEN\` is not configured, so \`npm publish\` did not run." >> "$GITHUB_STEP_SUMMARY"
-          echo "Configure the \`NPM_TOKEN\` repository secret and re-run this workflow to publish." >> "$GITHUB_STEP_SUMMARY"
-          echo "::warning::NPM_TOKEN is not configured; skipping npm publish for ${{ github.ref_name }}."
+          echo "Tag \`${{ github.ref_name }}\` was built and verified. npm publishing is opt-in and did not run." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This package is distributed via git tag pins, so this is expected." >> "$GITHUB_STEP_SUMMARY"
+          echo "To publish to npm, set repository variable \`PUBLISH_TO_NPM=true\` and configure the \`NPM_TOKEN\` secret with publish rights for \`pi-thread-goal\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::npm publish is opt-in (PUBLISH_TO_NPM not set); skipped for ${{ github.ref_name }}."
