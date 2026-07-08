@@ -14,7 +14,7 @@ import {
 import { canAutoResumeGoal, isGoalActive } from "./goal-state.js";
 import { loadGoalState } from "./goal-state-persistence.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
-import { decideGoalNextAction } from "./policies.js";
+import { buildContinuationReason, decideGoalNextAction } from "./policies.js";
 import {
 	GOAL_CONTEXT_CUSTOM_TYPE,
 	GOAL_PAUSED_CONTEXT_CUSTOM_TYPE,
@@ -258,11 +258,11 @@ async function handleAgentEnd(
 		if (!isGoalActive(latest)) return;
 
 		const decision = await evaluateGoal(latest, runtimeCtx);
-		const reason =
-			decision.reason.trim() ||
-			(decision.met
-				? "Goal condition satisfied."
-				: "Goal condition not yet satisfied.");
+		const reason = buildContinuationReason(
+			latest,
+			decision,
+			extractAssistantText(event.messages),
+		);
 		const fresh = loadGoalState(runtimeCtx);
 		if (
 			!isGoalActive(fresh) ||
@@ -309,7 +309,7 @@ async function handleAgentEnd(
 		applyGoalUi(runtimeCtx, evaluated);
 		if (!isGoalActive(evaluated)) return;
 
-		const action = decideGoalNextAction(evaluated, decision);
+		const action = decideGoalNextAction(evaluated, { ...decision, reason });
 		applyGoalAction(services, evaluated, action);
 	} catch (error) {
 		handleEvaluatorError(runtimePi, runtimeCtx, continuationGuard, error);
@@ -383,4 +383,30 @@ function isGoalContextMessage(message: ContextMessage): boolean {
 function messageHasGoalId(message: ContextMessage, goalId: string): boolean {
 	const details = message.details;
 	return isRecord(details) && details.goalId === goalId;
+}
+
+function extractAssistantText(messages: unknown[]): string {
+	return messages.flatMap(extractMessageText).join("\n").trim();
+}
+
+function extractMessageText(message: unknown): string[] {
+	if (!isRecord(message)) return [];
+	if (message.role !== "assistant") return [];
+	return extractContentText(message.content);
+}
+
+function extractContentText(content: unknown): string[] {
+	if (typeof content === "string") return [content];
+	if (!Array.isArray(content)) return [];
+	return content.flatMap((item) => {
+		if (typeof item === "string") return [item];
+		if (
+			isRecord(item) &&
+			item.type === "text" &&
+			typeof item.text === "string"
+		) {
+			return [item.text];
+		}
+		return [];
+	});
 }

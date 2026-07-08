@@ -91,6 +91,66 @@ describe("goal completion validation", () => {
 });
 
 describe("registered goal tools", () => {
+	it("documents blocked as real operational blockers only", () => {
+		const tools = new Map<string, any>();
+		registerGoalTools({
+			registerTool: (tool: any) => tools.set(tool.name, tool),
+			appendEntry: vi.fn(),
+		} as any);
+		const tool = tools.get("update_goal_progress");
+
+		expect(tool.promptGuidelines.join("\n")).toContain(
+			"Use blocked only for real operational blockers",
+		);
+		expect(JSON.stringify(tool.parameters)).toContain(
+			"Do not list risks or uncertainty here",
+		);
+	});
+
+	it("warns when blocked entries look like technical risk", async () => {
+		const tools = new Map<string, any>();
+		const branchEntries: any[] = [
+			{
+				type: "custom",
+				customType: "thread-goal-state",
+				data: {
+					action: "create",
+					event: { action: "create", goalId: "g1", objective: "ship", now: 1 },
+					state: null,
+				},
+			},
+		];
+		const appendEntry = vi.fn((customType: string, data: unknown) =>
+			branchEntries.push({ type: "custom", customType, data }),
+		);
+		registerGoalTools({
+			registerTool: (tool: any) => tools.set(tool.name, tool),
+			appendEntry,
+		} as any);
+		const ctx = {
+			sessionManager: {
+				getBranch: () => branchEntries,
+				sessionId: "risk-session",
+				leafId: "test-branch",
+			},
+		};
+
+		await tools.get("get_goal").execute("tc0", {}, undefined, undefined, ctx);
+		const result = await tools
+			.get("update_goal_progress")
+			.execute(
+				"tc1",
+				{ blocked: ["Full complex-script/ZWJ shaping likely needs HarfBuzz"] },
+				undefined,
+				undefined,
+				ctx,
+			);
+
+		expect(result.details.blockerWarning.items).toEqual([
+			"Full complex-script/ZWJ shaping likely needs HarfBuzz",
+		]);
+	});
+
 	it("requires prepare_goal_completion before complete_goal", async () => {
 		const tools = new Map<string, any>();
 		const branchEntries: any[] = [

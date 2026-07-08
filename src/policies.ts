@@ -63,6 +63,87 @@ function mentionsCompletionEvidence(evidence: string): boolean {
 	);
 }
 
+export type ProgressBlockerClassification =
+	| "operational"
+	| "risk"
+	| "uncertainty";
+
+const OPERATIONAL_BLOCKER_PATTERN =
+	/\b(waiting|blocked by|need(?:s|ed)? (?:user|decision|approval|credential|secret|token|access|permission|external)|requires? (?:user|decision|approval|credential|secret|token|access|permission|external)|missing (?:credential|secret|token|access|permission)|unavailable|outage|rate limit|no offline path)\b/i;
+
+const RISK_BLOCKER_PATTERN =
+	/\b(likely|probably|risk|may need|might need|needs? (?:a )?(?:shaping engine|harfbuzz|dependency|library|refactor)|complex|hard|difficult|uncertain|unknown|investigate|research|explore|spike|technical debt|limitation)\b/i;
+
+export function classifyProgressBlocker(
+	text: string,
+): ProgressBlockerClassification {
+	const normalized = text.trim();
+	if (OPERATIONAL_BLOCKER_PATTERN.test(normalized)) return "operational";
+	if (RISK_BLOCKER_PATTERN.test(normalized)) {
+		return /\b(uncertain|unknown|investigate|research|explore|spike)\b/i.test(
+			normalized,
+		)
+			? "uncertainty"
+			: "risk";
+	}
+	return "operational";
+}
+
+export function hasOnlyNonOperationalBlockers(blocked: string[]): boolean {
+	return (
+		blocked.length > 0 &&
+		blocked.every((item) => classifyProgressBlocker(item) !== "operational")
+	);
+}
+
+export function getNonOperationalBlockers(blocked: string[]): string[] {
+	return blocked.filter(
+		(item) => classifyProgressBlocker(item) !== "operational",
+	);
+}
+
+export function isCheckpointOnlyStop(text: string): boolean {
+	const normalized = text.toLowerCase();
+	if (!normalized.trim()) return false;
+	const mentionsProgress =
+		/\b(complet|termin|done|finished|implemented|verified|validated|passed|tests? ok|build ok|green)\b/i.test(
+			normalized,
+		);
+	const mentionsStatus =
+		/\b(status|summary|resumen|checkpoint|reporte|report|worklog|no marqué|not mark(?:ed)?|no complete|not complete)\b/i.test(
+			normalized,
+		);
+	const mentionsRemaining =
+		/\b(remain|remaining|pendiente|pendientes|quedan|roadmap|backlog|next unfinished|siguiente pendiente|next item|not done|aún quedan|still)\b/i.test(
+			normalized,
+		);
+
+	return (
+		(mentionsProgress && mentionsRemaining) ||
+		(mentionsStatus && mentionsRemaining)
+	);
+}
+
+export function buildContinuationReason(
+	goal: GoalState,
+	decision: EvaluatorDecision,
+	agentText: string,
+): string {
+	const reason = normalizeDecisionReason(decision);
+	const notes: string[] = [];
+	if (!decision.met && isCheckpointOnlyStop(agentText)) {
+		notes.push(
+			"Previous turn was checkpoint-only while goal remains unmet; continue with the next unfinished item.",
+		);
+	}
+	if (!decision.met && hasOnlyNonOperationalBlockers(goal.progress.blocked)) {
+		notes.push(
+			"Persisted blockers look like technical risk or actionable uncertainty, not operational blockers; keep them in current/summary and continue with useful work.",
+		);
+	}
+	return notes.length > 0 ? `${notes.join(" ")} Evaluator: ${reason}` : reason;
+}
+
 export function validateGoalProgressUpdate(
 	current: GoalProgress,
 	patch: Partial<GoalProgress>,

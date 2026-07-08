@@ -15,6 +15,7 @@ import {
 import { validateObjective } from "./goal-state.js";
 import { loadGoalState } from "./goal-state-persistence.js";
 import {
+	getNonOperationalBlockers,
 	validateGoalCompletion,
 	validateGoalProgressUpdate,
 } from "./policies.js";
@@ -54,9 +55,22 @@ const completeGoalParams = Type.Object(
 );
 const updateGoalProgressParams = Type.Object(
 	{
-		done: Type.Optional(Type.Array(Type.String())),
-		current: Type.Optional(Type.String()),
-		blocked: Type.Optional(Type.Array(Type.String())),
+		done: Type.Optional(
+			Type.Array(Type.String(), {
+				description: "Completed work items with concrete evidence.",
+			}),
+		),
+		current: Type.Optional(
+			Type.String({
+				description: "The next/current actionable work item.",
+			}),
+		),
+		blocked: Type.Optional(
+			Type.Array(Type.String(), {
+				description:
+					"Real operational blockers only: no useful next action remains without user, runtime, or external input. Do not list risks or uncertainty here.",
+			}),
+		),
 		summary: Type.Optional(Type.String()),
 	},
 	{ additionalProperties: false },
@@ -244,6 +258,8 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 			"Use update_goal_progress after get_goal has observed the active goal in this context.",
 		promptGuidelines: [
 			"Use update_goal_progress to update done/current/blocked/summary for the active goal.",
+			"Use blocked only for real operational blockers: no useful next action remains without a user, runtime, or external decision. Put risks, uncertainty, and difficult-but-actionable work in current/summary instead.",
+			"For ongoing batch goals, after noting progress choose the next unfinished item and continue rather than giving a status-only response.",
 			"Do not use update_goal_progress to rewrite the goal objective itself.",
 			"Call get_goal first if this context has not freshly observed the goal.",
 		],
@@ -262,6 +278,9 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 			const patch = normalizeProgressInput(params);
 			const progress = validateGoalProgressUpdate(current.progress, patch);
 			if (!progress.ok) throw new Error(progress.reason);
+			const nonOperationalBlockers = getNonOperationalBlockers(
+				progress.progress.blocked,
+			);
 			const next = saveGoalOperation(
 				pi,
 				{
@@ -284,7 +303,17 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 							: "Progress not updated.",
 					},
 				],
-				details: { goal: next, protocol: protocolDetails(decision) },
+				details: {
+					goal: next,
+					protocol: protocolDetails(decision),
+					blockerWarning: nonOperationalBlockers.length
+						? {
+								message:
+									"Some blocked entries look like technical risk or actionable uncertainty; keep those in current/summary unless no useful next action remains.",
+								items: nonOperationalBlockers,
+							}
+						: undefined,
+				},
 			};
 		},
 	});

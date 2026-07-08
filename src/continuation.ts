@@ -135,6 +135,20 @@ export function clearQueuedGoalContinuation(
 	}
 }
 
+export function selectContinuationDeliveryMode(
+	ctx: RuntimeIdleContext,
+	goal: GoalState,
+	override?: GoalContinuationMode,
+): GoalContinuationMode {
+	if (override) return override;
+	if (goal.continuationAttempt && goal.continuationAttempt > 0) {
+		return goal.continuationLastMode === "followUp" ? "immediate" : "followUp";
+	}
+	return ctx.isIdle?.() === true && ctx.hasPendingMessages?.() !== true
+		? "immediate"
+		: "followUp";
+}
+
 export interface QueueGoalContinuationInput {
 	ports: GoalContinuationPorts;
 	ctx: RuntimeIdleContext;
@@ -144,6 +158,7 @@ export interface QueueGoalContinuationInput {
 	reason?: string;
 	phase?: Extract<GoalContinuationPhase, "queued" | "stale-retry">;
 	notification?: string;
+	mode?: GoalContinuationMode;
 }
 
 export function queueGoalContinuation(
@@ -172,10 +187,7 @@ export function queueGoalContinuation(
 		);
 		return false;
 	}
-	const mode =
-		ctx.isIdle?.() === true && ctx.hasPendingMessages?.() !== true
-			? "immediate"
-			: "followUp";
+	const mode = selectContinuationDeliveryMode(ctx, goal, input.mode);
 	try {
 		ports.queue.send(prompt, mode);
 	} catch (error) {

@@ -4,6 +4,7 @@ import {
 	clearQueuedGoalContinuation,
 	MAX_CONTINUATION_DELIVERY_ATTEMPTS,
 	queueGoalContinuation,
+	selectContinuationDeliveryMode,
 	shouldPauseForContinuationDeliveryFailure,
 	shouldQueueGoalContinuation,
 	shouldResumeGoalAfterSessionStart,
@@ -163,6 +164,28 @@ describe("pending continuation watchdog", () => {
 				1_000 + CONTINUATION_WATCHDOG_MS * 4,
 			),
 		).toBe(true);
+	});
+});
+
+describe("continuation delivery mode selection", () => {
+	it("uses follow-up fallback after an immediate delivery did not start", () => {
+		const idle = { isIdle: () => true, hasPendingMessages: () => false };
+
+		expect(selectContinuationDeliveryMode(idle, goal)).toBe("immediate");
+		expect(
+			selectContinuationDeliveryMode(idle, {
+				...goal,
+				continuationAttempt: 1,
+				continuationLastMode: "immediate",
+			}),
+		).toBe("followUp");
+		expect(
+			selectContinuationDeliveryMode(idle, {
+				...goal,
+				continuationAttempt: 2,
+				continuationLastMode: "followUp",
+			}),
+		).toBe("immediate");
 	});
 });
 

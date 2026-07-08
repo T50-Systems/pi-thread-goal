@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createContinuationGuard } from "../src/continuation.js";
 import { requireGoalProtocolContext } from "../src/goal-protocol.js";
 import {
@@ -18,6 +18,12 @@ import type {
 	RuntimeExtensionAPI,
 } from "../src/runtime-types.js";
 import type { GoalEvent } from "../src/types.js";
+
+const completeMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@earendil-works/pi-ai/compat", () => ({
+	complete: completeMock,
+}));
 
 describe("runtime mode handlers", () => {
 	it("clears stale pending continuation before injecting goal context", async () => {
@@ -96,6 +102,49 @@ describe("runtime mode handlers", () => {
 
 		expect(harness.sentMessages).toHaveLength(1);
 		expect(loadGoalState(harness.runtimeCtx)?.continuationAttempt).toBe(2);
+		expect(harness.sentMessages[0]?.options).toEqual({ deliverAs: "followUp" });
+	});
+
+	it("queues checkpoint-specific continuation when an unmet turn only reports status", async () => {
+		completeMock.mockResolvedValueOnce({
+			content: [
+				{ type: "text", text: '{"met":false,"reason":"Roadmap remains."}' },
+			],
+		});
+		const harness = createHarness();
+		seedGoal(harness.branch);
+		harness.runtimeCtx.model = { provider: "custom", id: "model" };
+		harness.runtimeCtx.modelRegistry.getApiKeyAndHeaders = async () => ({
+			ok: true,
+			apiKey: "test-key",
+		});
+		const lock = { evaluatingGoalId: null as string | null };
+
+		await handleAgentEndWithLock(
+			harness.services,
+			{
+				messages: [
+					{
+						role: "assistant",
+						content: [
+							{
+								type: "text",
+								text: "Sub-bloque terminado, tests OK. No marqué el goal como completo porque quedan pendientes del roadmap.",
+							},
+						],
+					},
+				],
+			},
+			lock,
+		);
+
+		expect(harness.sentMessages).toHaveLength(1);
+		expect(harness.sentMessages[0]?.prompt).toContain(
+			"Previous turn was checkpoint-only while goal remains unmet",
+		);
+		expect(loadGoalState(harness.runtimeCtx)?.continuationReason).toContain(
+			"Previous turn was checkpoint-only while goal remains unmet",
+		);
 	});
 
 	it("resets the evaluator lock when agent-end evaluation pauses the goal", async () => {

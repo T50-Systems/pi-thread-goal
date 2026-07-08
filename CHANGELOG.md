@@ -17,6 +17,16 @@
   errors and that the goal reached `complete`. Skipped by default so the normal
   suite stays fast and offline; intended as a pre-release check.
 
+### Changed
+
+- hardened active-goal prompts and progress-tool guidance so checkpoint/status-only
+  responses after a completed subtask are treated as invalid for ongoing batch
+  goals, and `Blocked` is reserved for real operational blockers rather than
+  technical risks or actionable uncertainty.
+- added runtime checkpoint-only stop detection, blocker classification warnings,
+  and continuation retry fallback diagnostics so unmet goals continue with clearer
+  reasons and stale delivery retries alternate transport modes before pausing.
+
 ## 0.5.2 - 2026-07-07
 
 ### Fixed

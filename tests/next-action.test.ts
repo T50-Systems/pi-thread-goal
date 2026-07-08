@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+	buildContinuationReason,
+	classifyProgressBlocker,
 	decideGoalNextAction,
+	hasOnlyNonOperationalBlockers,
 	hasReachedAutomaticContinuationLimit,
 	hasReachedTokenBudget,
+	isCheckpointOnlyStop,
 	MAX_AUTOMATIC_CONTINUATION_TURNS,
 } from "../src/policies.js";
 import type { GoalState } from "../src/types.js";
@@ -76,6 +80,47 @@ describe("hasReachedTokenBudget", () => {
 				usage: { ...goal.usage, total: 100 },
 			}),
 		).toBe(false);
+	});
+});
+
+describe("checkpoint and blocker continuation policy", () => {
+	it("detects checkpoint-only status reports for unmet batch goals", () => {
+		expect(
+			isCheckpointOnlyStop(
+				"Sub-bloque terminado, tests OK. No marqué el goal como completo porque quedan pendientes del roadmap.",
+			),
+		).toBe(true);
+		expect(
+			isCheckpointOnlyStop("I need a user decision before continuing."),
+		).toBe(false);
+	});
+
+	it("strengthens continuation reasons for checkpoint-only unmet turns", () => {
+		expect(
+			buildContinuationReason(
+				goal,
+				{ met: false, reason: "Roadmap remains." },
+				"Build passed; no marqué el goal como completo porque aún quedan pendientes.",
+			),
+		).toContain("Previous turn was checkpoint-only while goal remains unmet");
+	});
+
+	it("classifies technical risk separately from operational blockers", () => {
+		expect(
+			classifyProgressBlocker(
+				"Full complex-script/ZWJ shaping likely needs HarfBuzz",
+			),
+		).toBe("risk");
+		expect(
+			classifyProgressBlocker(
+				"waiting for user decision on shaping engine dependency",
+			),
+		).toBe("operational");
+		expect(
+			hasOnlyNonOperationalBlockers([
+				"Full complex-script/ZWJ shaping likely needs HarfBuzz",
+			]),
+		).toBe(true);
 	});
 });
 

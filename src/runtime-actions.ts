@@ -187,8 +187,8 @@ export function retryPendingContinuation(
 	if (goal && shouldPauseForContinuationDeliveryFailure(goal, runtimeCtx)) {
 		pauseGoal({ runtimePi, runtimeCtx, continuationGuard }, goal, {
 			reason: "error",
-			message: `Automatic continuation could not be delivered after ${MAX_CONTINUATION_DELIVERY_ATTEMPTS} attempts. Use /goal start or /goal resume to continue.`,
-			notification: `Goal paused: automatic continuation could not be delivered after ${MAX_CONTINUATION_DELIVERY_ATTEMPTS} attempts. Use /goal start or /goal resume to continue.`,
+			message: `Automatic continuation delivery did not start a new agent turn after ${MAX_CONTINUATION_DELIVERY_ATTEMPTS} attempts. Use /goal doctor, then /goal resume or /goal start to continue.`,
+			notification: `Goal paused: automatic continuation delivery did not start a new agent turn after ${MAX_CONTINUATION_DELIVERY_ATTEMPTS} attempts. Use /goal doctor, then /goal resume or /goal start to continue.`,
 		});
 		return true;
 	}
@@ -201,11 +201,37 @@ export function retryPendingContinuation(
 		goal,
 		prompt: renderGoalContinuationPrompt(
 			goal,
-			"A previously queued goal continuation did not start. Retry from the persisted goal state.",
+			"A previously queued goal continuation did not start a new agent turn. Retry from the persisted goal state.",
 		),
-		reason: "Retrying stale goal continuation.",
+		reason: formatContinuationRetryReason(goal, runtimeCtx),
 		phase: "stale-retry",
 	});
+}
+
+function formatContinuationRetryReason(
+	goal: GoalState,
+	runtimeCtx: GoalRuntimeContext,
+): string {
+	const nextAttempt = (goal.continuationAttempt ?? 0) + 1;
+	const idle = runtimeCtx.isIdle?.();
+	const hasPendingMessages = runtimeCtx.hasPendingMessages?.();
+	return [
+		"Retrying stale goal continuation because prior delivery did not start a new agent turn.",
+		`attempt=${nextAttempt}/${MAX_CONTINUATION_DELIVERY_ATTEMPTS}`,
+		`previousMode=${goal.continuationLastMode ?? "unknown"}`,
+		`idle=${idle === undefined ? "unknown" : String(idle)}`,
+		`hasPendingMessages=${
+			hasPendingMessages === undefined ? "unknown" : String(hasPendingMessages)
+		}`,
+		goal.continuationLastSentAt
+			? `lastSentAt=${goal.continuationLastSentAt}`
+			: undefined,
+		goal.continuationLastStartedAt
+			? `lastStartedAt=${goal.continuationLastStartedAt}`
+			: undefined,
+	]
+		.filter((part): part is string => Boolean(part))
+		.join(" ");
 }
 
 export function ensureGoalStateInvariant(
