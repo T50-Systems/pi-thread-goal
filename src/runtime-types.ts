@@ -4,8 +4,10 @@ import type { EvaluatorDecision } from "./types.js";
 export interface GoalRuntimeContext {
 	sessionManager: {
 		getBranch(): Array<{ type: string; customType?: string; data?: unknown }>;
+		sessionId?: string;
+		leafId?: string | null;
 	};
-	goalProtocol: GoalProtocolContext;
+	goalProtocol?: GoalProtocolContext;
 	model?: { provider: string; id: string };
 	modelRegistry: {
 		find(provider: string, id: string): unknown;
