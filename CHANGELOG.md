@@ -11,6 +11,11 @@
   session leaf advances between calls. Reverting either the v0.5.1 or v0.5.2
   fix makes this harness fail with the original user-facing error, so both
   shipped bugs would have been caught before release.
+- opt-in live end-to-end smoke (`tests/pi-live.e2e.test.ts`, run via
+  `npm run test:e2e-pi`) that launches a real Pi session with a real model,
+  has it create and complete a goal through the tools, and asserts no protocol
+  errors and that the goal reached `complete`. Skipped by default so the normal
+  suite stays fast and offline; intended as a pre-release check.
 
 ## 0.5.2 - 2026-07-07
 
