@@ -65,6 +65,8 @@ const updateGoalProgressParams = Type.Object(
 interface GoalToolContext extends GoalProtocolContextSource {
 	sessionManager: {
 		getBranch(): Array<{ type: string; customType?: string; data?: unknown }>;
+		sessionId?: string;
+		leafId?: string | null;
 	};
 }
 

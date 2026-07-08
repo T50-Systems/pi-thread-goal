@@ -6,7 +6,11 @@ import {
 import { evaluateGoal } from "./evaluator.js";
 import { saveGoalOperation } from "./goal-operations.js";
 import type { GoalProtocolCapabilitySummary } from "./goal-protocol.js";
-import { observeGoal, resetGoalProtocolEpoch } from "./goal-protocol.js";
+import {
+	observeGoal,
+	requireGoalProtocolContext,
+	resetGoalProtocolEpoch,
+} from "./goal-protocol.js";
 import { canAutoResumeGoal, isGoalActive } from "./goal-state.js";
 import { loadGoalState } from "./goal-state-persistence.js";
 import { createPiContinuationPorts } from "./pi-continuation-ports.js";
@@ -128,7 +132,7 @@ export async function handleSessionBeforeCompact(
 	runtimeCtx: GoalRuntimeContext,
 ): Promise<SessionBeforeCompactResult | undefined> {
 	const goal = loadGoalState(runtimeCtx);
-	resetGoalProtocolEpoch(runtimeCtx.goalProtocol);
+	resetGoalProtocolEpoch(requireGoalProtocolContext(runtimeCtx));
 	if (!isGoalActive(goal)) return undefined;
 	const previous = event.preparation.previousSummary?.trim();
 	const summary = [

@@ -112,8 +112,11 @@ describe("registered goal tools", () => {
 			appendEntry,
 		} as any);
 		const ctx = {
-			sessionManager: { getBranch: () => branchEntries },
-			goalProtocol: { sessionId: "test-session", branchId: "test-branch" },
+			sessionManager: {
+				getBranch: () => branchEntries,
+				sessionId: "test-session",
+				leafId: "test-branch",
+			},
 		};
 
 		await expect(
@@ -182,8 +185,11 @@ describe("registered goal tools", () => {
 			appendEntry,
 		} as any);
 		const ctx = {
-			sessionManager: { getBranch: () => branchEntries },
-			goalProtocol: { sessionId: "noop-session", branchId: "test-branch" },
+			sessionManager: {
+				getBranch: () => branchEntries,
+				sessionId: "noop-session",
+				leafId: "test-branch",
+			},
 		};
 
 		await tools.get("get_goal").execute("tc0", {}, undefined, undefined, ctx);
@@ -225,8 +231,11 @@ describe("registered goal tools", () => {
 		} as any);
 
 		const ctx = {
-			sessionManager: { getBranch: () => branchEntries },
-			goalProtocol: { sessionId: "test-session", branchId: "test-branch" },
+			sessionManager: {
+				getBranch: () => branchEntries,
+				sessionId: "test-session",
+				leafId: "test-branch",
+			},
 		};
 		const observed = await tools
 			.get("get_goal")

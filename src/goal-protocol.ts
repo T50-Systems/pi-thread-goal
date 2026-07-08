@@ -10,6 +10,10 @@ export interface GoalProtocolContext {
 
 export interface GoalProtocolContextSource {
 	goalProtocol?: GoalProtocolContext;
+	sessionManager?: {
+		sessionId?: string;
+		leafId?: string | null;
+	};
 }
 
 export function goalProtocolContextKey(context: GoalProtocolContext): string {
@@ -23,20 +27,41 @@ export function goalProtocolContextKey(context: GoalProtocolContext): string {
 export function requireGoalProtocolContext(
 	context: GoalProtocolContextSource,
 ): GoalProtocolContext {
-	const protocol = context.goalProtocol;
-	if (
-		!protocol ||
-		typeof protocol.sessionId !== "string" ||
-		protocol.sessionId.trim().length === 0 ||
-		typeof protocol.branchId !== "string" ||
-		protocol.branchId.trim().length === 0 ||
-		(protocol.actorId !== undefined && typeof protocol.actorId !== "string")
-	) {
+	// Prefer an explicit, host-provided protocol context when present. No
+	// shipped Pi host provides one today, but honoring it keeps the door open
+	// for a host (or test) that supplies an authoritative sessionId/branchId.
+	const explicit = context.goalProtocol;
+	if (explicit) {
+		if (
+			typeof explicit.sessionId !== "string" ||
+			explicit.sessionId.trim().length === 0 ||
+			typeof explicit.branchId !== "string" ||
+			explicit.branchId.trim().length === 0 ||
+			(explicit.actorId !== undefined && typeof explicit.actorId !== "string")
+		) {
+			throw new Error(
+				"Goal protocol context is invalid: sessionId and branchId must be non-empty strings.",
+			);
+		}
+		return explicit;
+	}
+
+	// Otherwise derive the context from Pi's session manager. The session id
+	// scopes the in-memory capability cache per session; the current branch
+	// leaf keeps goals on different branches (via /tree or forks) from sharing
+	// observations. The leaf advances per entry, but the protocol epoch is
+	// reset on session_start and session_tree, so that churn does not leak
+	// capabilities across branches.
+	const sessionId = context.sessionManager?.sessionId;
+	if (typeof sessionId !== "string" || sessionId.trim().length === 0) {
 		throw new Error(
-			"Goal protocol requires explicit sessionId and branchId context.",
+			"Goal protocol requires a session id; none was provided by the Pi session manager.",
 		);
 	}
-	return protocol;
+	const leafId = context.sessionManager?.leafId;
+	const branchId =
+		typeof leafId === "string" && leafId.trim().length > 0 ? leafId : sessionId;
+	return { sessionId, branchId };
 }
 
 export type GoalProtocolState =
