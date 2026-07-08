@@ -103,17 +103,19 @@ function createHarness() {
 	}> = [];
 	const widgets: Record<string, string[] | undefined> = {};
 	const statuses: Record<string, string | undefined> = {};
-	const protocolContext = {
-		sessionId: "test-session",
-		branchId: "test-branch",
-	};
 	const ctx = {
 		hasUI: false,
 		isIdle: vi.fn(() => true),
 		hasPendingMessages: vi.fn(() => false),
 		waitForIdle: vi.fn(async () => {}),
-		sessionManager: { getBranch: vi.fn(() => branch) },
-		goalProtocol: protocolContext,
+		// Mirror the real Pi 0.80.3 extension context: the host exposes
+		// sessionManager.{sessionId, leafId} and does NOT provide a goalProtocol
+		// field. The extension must derive its protocol context from these.
+		sessionManager: {
+			getBranch: vi.fn(() => branch),
+			sessionId: "test-session",
+			leafId: "test-leaf",
+		},
 		model: { provider: "anthropic", id: "custom" },
 		modelRegistry: {
 			find: vi.fn((_provider: string, id: string) => ({ id })),

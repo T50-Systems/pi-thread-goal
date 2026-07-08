@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createContinuationGuard } from "../src/continuation.js";
+import { requireGoalProtocolContext } from "../src/goal-protocol.js";
 import {
 	type GoalSessionEntry,
 	loadGoalState,
@@ -169,13 +170,12 @@ function createHarness(
 			sentMessages.push({ prompt, options: messageOptions });
 		},
 	} satisfies RuntimeExtensionAPI;
-	const protocolContext = {
-		sessionId: "test-session",
-		branchId: "test-branch",
-	};
 	const runtimeCtx: GoalRuntimeContext = {
-		sessionManager: { getBranch: () => branch },
-		goalProtocol: protocolContext,
+		sessionManager: {
+			getBranch: () => branch,
+			sessionId: "test-session",
+			leafId: "test-leaf",
+		},
 		modelRegistry: {
 			find: () => undefined,
 			getApiKeyAndHeaders: async () => ({ ok: false }),
@@ -193,7 +193,7 @@ function createHarness(
 	const services: GoalRuntimeServices = {
 		runtimePi,
 		runtimeCtx,
-		protocolContext,
+		protocolContext: requireGoalProtocolContext(runtimeCtx),
 		continuationGuard: createContinuationGuard(),
 	};
 	return {

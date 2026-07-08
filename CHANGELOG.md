@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## 0.5.1 - 2026-07-07
+
+### Fixed
+
+- the extension no longer throws "Goal protocol requires explicit sessionId
+  and branchId context." when binding to a real Pi session. It required an
+  authoritative `ctx.goalProtocol` that no shipped Pi host provides (broken
+  since v0.4.0); it now derives the protocol context from
+  `ctx.sessionManager.{sessionId, leafId}`, honoring an explicit
+  `goalProtocol` when a host supplies one. Tests now exercise the real
+  session-manager context shape instead of a fake `goalProtocol`, and the
+  fix was verified against a live Pi 0.80.3 session.
+
 ## 0.5.0 - 2026-07-07
 
 ### Added
