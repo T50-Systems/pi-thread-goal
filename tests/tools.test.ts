@@ -164,6 +164,68 @@ describe("registered goal tools", () => {
 		expect(appendEntry).toHaveBeenCalledTimes(1);
 	});
 
+	it("authorizes the completion handshake as the session leaf advances", async () => {
+		// Reproduces the real Pi failure: the session leaf advances on every
+		// appended entry, so get_goal and the mutating tools each observe a
+		// different leafId within one turn. The capability key must not move
+		// with the leaf, or prepare_goal_completion is rejected with
+		// "Call get_goal before mutating goal state." immediately after get_goal.
+		const tools = new Map<string, any>();
+		const branchEntries: any[] = [
+			{
+				type: "custom",
+				customType: "thread-goal-state",
+				data: {
+					action: "create",
+					event: { action: "create", goalId: "g1", objective: "ship", now: 1 },
+					state: null,
+				},
+			},
+		];
+		const appendEntry = vi.fn((customType: string, data: unknown) =>
+			branchEntries.push({ type: "custom", customType, data }),
+		);
+		registerGoalTools({
+			registerTool: (tool: any) => tools.set(tool.name, tool),
+			appendEntry,
+		} as any);
+		let leaf = 0;
+		const ctx = {
+			sessionManager: {
+				getBranch: () => branchEntries,
+				sessionId: "leaf-advance-session",
+				// A fresh, advancing leaf id on every read, like real Pi.
+				get leafId() {
+					leaf += 1;
+					return `leaf-${leaf}`;
+				},
+			},
+		};
+
+		await tools.get("get_goal").execute("tc0", {}, undefined, undefined, ctx);
+		const prepared = await tools
+			.get("prepare_goal_completion")
+			.execute(
+				"tc1",
+				{ evidence: "done and tests passed" },
+				undefined,
+				undefined,
+				ctx,
+			);
+		expect(prepared.details.protocol).toBeDefined();
+		const result = await tools
+			.get("complete_goal")
+			.execute(
+				"tc2",
+				{ evidence: "done and tests passed" },
+				undefined,
+				undefined,
+				ctx,
+			);
+		expect(result.terminate).toBe(true);
+		expect(result.details.goal.status).toBe("complete");
+	});
+
 	it("rejects no-op progress updates without appending", async () => {
 		const tools = new Map<string, any>();
 		const branchEntries: any[] = [
