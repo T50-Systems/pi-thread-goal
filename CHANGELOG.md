@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- real-runtime test harness (`tests/pi-runtime.e2e.test.ts`) that drives the
+  extension against Pi's actual `SessionManager` instead of a hand-built fake
+  context. It binds the extension, creates a goal, and runs the
+  get_goal -> prepare_goal_completion -> complete_goal handshake while the real
+  session leaf advances between calls. Reverting either the v0.5.1 or v0.5.2
+  fix makes this harness fail with the original user-facing error, so both
+  shipped bugs would have been caught before release.
+
 ## 0.5.2 - 2026-07-07
 
 ### Fixed
