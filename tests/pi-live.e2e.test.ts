@@ -60,54 +60,43 @@ function goalReachedComplete(sessionDir: string): {
 }
 
 describe.skipIf(!LIVE)("live Pi session (real model)", () => {
-	it(
-		"creates and completes a goal end-to-end with no protocol errors",
-		() => {
-			const sessionDir = mkdtempSync(join(tmpdir(), "pi-goal-e2e-"));
-			const ext = join(process.cwd(), "extensions", "index.ts");
-			let output = "";
-			try {
-				// shell:true is needed to resolve the `pi` launcher across
-				// platforms (e.g. pi.cmd on Windows). It is safe here: the args
-				// are fixed flags plus paths we create, and the model prompt is
-				// passed on stdin, never interpolated into the command line.
-				const res = spawnSync(
-					"pi",
-					[
-						"--print",
-						"--no-extensions",
-						"-e",
-						ext,
-						"--session-dir",
-						sessionDir,
-					],
-					{
-						input: PROMPT,
-						encoding: "utf8",
-						shell: true,
-						timeout: 240_000,
-					},
-				);
-				output = `${res.stdout ?? ""}\n${res.stderr ?? ""}`;
+	it("creates and completes a goal end-to-end with no protocol errors", () => {
+		const sessionDir = mkdtempSync(join(tmpdir(), "pi-goal-e2e-"));
+		const ext = join(process.cwd(), "extensions", "index.ts");
+		let output = "";
+		try {
+			// shell:true is needed to resolve the `pi` launcher across
+			// platforms (e.g. pi.cmd on Windows). It is safe here: the args
+			// are fixed flags plus paths we create, and the model prompt is
+			// passed on stdin, never interpolated into the command line.
+			const res = spawnSync(
+				"pi",
+				["--print", "--no-extensions", "-e", ext, "--session-dir", sessionDir],
+				{
+					input: PROMPT,
+					encoding: "utf8",
+					shell: true,
+					timeout: 240_000,
+				},
+			);
+			output = `${res.stdout ?? ""}\n${res.stderr ?? ""}`;
 
-				// Regression guards: these are the exact failure signatures of the
-				// two shipped bugs. They must never appear in a real session.
-				expect(output).not.toMatch(/Extension error/i);
-				expect(output).not.toMatch(/Goal protocol requires/i);
-				expect(output).not.toMatch(/Call get_goal before mutating/i);
+			// Regression guards: these are the exact failure signatures of the
+			// two shipped bugs. They must never appear in a real session.
+			expect(output).not.toMatch(/Extension error/i);
+			expect(output).not.toMatch(/Goal protocol requires/i);
+			expect(output).not.toMatch(/Call get_goal before mutating/i);
 
-				// End-to-end success: the goal must actually reach completion.
-				const { complete, statuses } = goalReachedComplete(sessionDir);
-				expect(
-					complete,
-					`goal did not reach "complete"; observed statuses: ${JSON.stringify(
-						statuses,
-					)}. Output tail:\n${output.slice(-1500)}`,
-				).toBe(true);
-			} finally {
-				rmSync(sessionDir, { recursive: true, force: true });
-			}
-		},
-		300_000,
-	);
+			// End-to-end success: the goal must actually reach completion.
+			const { complete, statuses } = goalReachedComplete(sessionDir);
+			expect(
+				complete,
+				`goal did not reach "complete"; observed statuses: ${JSON.stringify(
+					statuses,
+				)}. Output tail:\n${output.slice(-1500)}`,
+			).toBe(true);
+		} finally {
+			rmSync(sessionDir, { recursive: true, force: true });
+		}
+	}, 300_000);
 });
