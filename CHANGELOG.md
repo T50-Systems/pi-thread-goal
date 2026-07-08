@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.5.0 - 2026-07-07
+
 ### Added
 
 - Biome linting and formatting scripts for the existing TypeScript style.
@@ -17,6 +19,15 @@
   runtime guards, pure policies, and UI formatting each now live in a single
   module. No behavior changes; boundary tests were retargeted at the
   consolidated modules and the commands/handlers import cycle was removed.
+- removed six unused goal-operation contract wrappers, collapsed the
+  `reduceGoalStateMachine`/`reduceGoalState` dual export into one name, and
+  deduplicated the `isRecord` type guard into a single `types.ts` export.
+- split CI into a single lint-and-typecheck job plus a Node 22/24 test matrix
+  so version-independent checks no longer run twice per push.
+- the boundary test now derives its pure-module set from `src/` minus an
+  explicit adapter/runtime allowlist instead of a hardcoded file list, and the
+  release workflow surfaces a visible job-summary warning when `NPM_TOKEN` is
+  absent instead of skipping publish silently.
 
 ## 0.4.0 - 2026-07-07
 
