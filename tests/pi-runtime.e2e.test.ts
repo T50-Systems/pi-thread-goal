@@ -1,6 +1,9 @@
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
-import goalExtension, { GOAL_CUSTOM_TYPE, loadGoalState } from "../src/index.js";
+import goalExtension, {
+	GOAL_CUSTOM_TYPE,
+	loadGoalState,
+} from "../src/index.js";
 
 // Layer 1 verification: drive the extension against Pi's REAL SessionManager
 // instead of a hand-built fake. This is the harness that would have caught
