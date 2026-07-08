@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## 0.5.2 - 2026-07-07
+
+### Fixed
+
+- goal mutation tools (`prepare_goal_completion`, `update_goal_progress`,
+  `complete_goal`) no longer reject with "Call get_goal before mutating goal
+  state." immediately after `get_goal`. v0.5.1 keyed the protocol capability
+  cache by the session leaf, which advances on every appended entry, so the
+  key moved between `get_goal` and the mutating tool within a single turn.
+  The capability is now scoped by session id; cross-branch isolation still
+  holds via the epoch reset on `session_start`/`session_tree` and the
+  goalId + revision checks. Adds a regression test that advances the leaf
+  between `get_goal` and the mutation.
+
 ## 0.5.1 - 2026-07-07
 
 ### Fixed

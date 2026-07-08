@@ -6,10 +6,25 @@ describe("requireGoalProtocolContext", () => {
 		const context = requireGoalProtocolContext({
 			sessionManager: { sessionId: "session-1", leafId: "leaf-9" },
 		});
-		expect(context).toEqual({ sessionId: "session-1", branchId: "leaf-9" });
+		expect(context).toEqual({ sessionId: "session-1", branchId: "session-1" });
 	});
 
-	it("falls back to the session id for the branch when no leaf is set", () => {
+	it("derives a branch id that is stable regardless of the advancing leaf", () => {
+		// The session leaf advances on every appended entry within a turn. The
+		// get_goal -> prepare_goal_completion -> complete_goal handshake must keep
+		// the same capability key across those calls, so branchId must not depend
+		// on leafId.
+		const atGetGoal = requireGoalProtocolContext({
+			sessionManager: { sessionId: "s", leafId: "leaf-a" },
+		});
+		const atMutation = requireGoalProtocolContext({
+			sessionManager: { sessionId: "s", leafId: "leaf-b" },
+		});
+		expect(atGetGoal.branchId).toBe(atMutation.branchId);
+		expect(atGetGoal).toEqual(atMutation);
+	});
+
+	it("resolves a context even when no leaf is set", () => {
 		expect(
 			requireGoalProtocolContext({
 				sessionManager: { sessionId: "session-1", leafId: null },
@@ -21,16 +36,6 @@ describe("requireGoalProtocolContext", () => {
 				sessionManager: { sessionId: "session-1" },
 			}),
 		).toEqual({ sessionId: "session-1", branchId: "session-1" });
-	});
-
-	it("distinguishes branches within the same session by leaf", () => {
-		const a = requireGoalProtocolContext({
-			sessionManager: { sessionId: "s", leafId: "leaf-a" },
-		});
-		const b = requireGoalProtocolContext({
-			sessionManager: { sessionId: "s", leafId: "leaf-b" },
-		});
-		expect(a.branchId).not.toBe(b.branchId);
 	});
 
 	it("prefers an explicit host-provided protocol context when present", () => {
