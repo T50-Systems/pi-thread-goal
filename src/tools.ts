@@ -204,12 +204,13 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 		description:
 			"Mark the active goal complete only with a fresh internal completion candidate.",
 		promptSnippet:
-			"Use complete_goal only after get_goal and prepare_goal_completion succeed for the same current goal revision and evidence.",
+			"Use complete_goal only after get_goal and prepare_goal_completion succeed for the same current goal revision and evidence; after it succeeds, send a final visible user summary.",
 		promptGuidelines: [
 			"Completion flow is get_goal -> prepare_goal_completion with evidence -> complete_goal with the same evidence.",
 			"If update_goal_progress ran earlier in the turn, call get_goal again before prepare_goal_completion because progress updates change the goal revision.",
 			"Do not use complete_goal to stop work early or to pause a goal.",
 			"Resolve blockers and update current progress before preparing completion.",
+			"After complete_goal succeeds, do not call more tools; send a final visible message to the user summarizing completion evidence and any relevant files/URLs.",
 		],
 		parameters: completeGoalParams,
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -238,15 +239,21 @@ export function registerGoalTools(pi: ExtensionAPI): void {
 				},
 				current,
 			);
+			const requiresFinalResponse = Boolean(next && next.status === "complete");
 			return {
 				content: [
 					{
 						type: "text",
-						text: next ? "Goal completed." : "Goal not completed.",
+						text: requiresFinalResponse
+							? "Goal completed. Now send a final visible user message summarizing what was completed, what was verified, and any relevant files or links."
+							: "Goal not completed.",
 					},
 				],
-				details: { goal: next, protocol: protocolDetails(decision) },
-				terminate: Boolean(next && next.status === "complete"),
+				details: {
+					goal: next,
+					protocol: protocolDetails(decision),
+					requiresFinalResponse,
+				},
 			};
 		},
 	});

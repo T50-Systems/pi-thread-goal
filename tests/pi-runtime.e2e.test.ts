@@ -184,7 +184,8 @@ describe("extension against the real Pi runtime", () => {
 		const completed = await h.runTool("complete_goal", {
 			evidence: "harness wired to the real SessionManager and verified",
 		});
-		expect(completed.terminate).toBe(true);
+		expect(completed.terminate).toBeUndefined();
+		expect(completed.details?.requiresFinalResponse).toBe(true);
 
 		expect(loadGoalState(h.ctx)?.status).toBe("complete");
 	});
