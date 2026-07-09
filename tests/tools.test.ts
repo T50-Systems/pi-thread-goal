@@ -126,6 +126,9 @@ describe("registered goal tools", () => {
 		expect(tools.get("complete_goal").promptGuidelines.join("\n")).toContain(
 			"If update_goal_progress ran earlier in the turn, call get_goal again",
 		);
+		expect(tools.get("complete_goal").promptGuidelines.join("\n")).toContain(
+			"send a final visible message",
+		);
 	});
 
 	it("warns when blocked entries look like technical risk", async () => {
@@ -239,7 +242,11 @@ describe("registered goal tools", () => {
 				ctx,
 			);
 
-		expect(result.terminate).toBe(true);
+		expect(result.terminate).toBeUndefined();
+		expect(result.details.requiresFinalResponse).toBe(true);
+		expect(result.content[0].text).toContain(
+			"send a final visible user message",
+		);
 		expect(result.details.goal.status).toBe("complete");
 		expect(result.details.goal.revision).toBe(2);
 		expect(appendEntry).toHaveBeenCalledTimes(1);
@@ -303,8 +310,9 @@ describe("registered goal tools", () => {
 				undefined,
 				ctx,
 			);
-		expect(result.terminate).toBe(true);
+		expect(result.terminate).toBeUndefined();
 		expect(result.details.goal.status).toBe("complete");
+		expect(result.details.requiresFinalResponse).toBe(true);
 	});
 
 	it("rejects no-op progress updates without appending", async () => {

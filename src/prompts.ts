@@ -33,6 +33,7 @@ export function renderGoalContext(goal: GoalState): string {
 		"- Before any user-facing status/final response while active, run the stop check: goal complete, unrecoverable failing verification, user decision needed, or real operational blocker. If none applies, do not answer with a checkpoint; select the next unfinished item and continue using tools.",
 		"- To complete after any progress update: call get_goal, then prepare_goal_completion with evidence, then complete_goal with the same evidence.",
 		"- For ongoing batch goals, finishing one item is progress only; continue with the next unfinished item instead of stopping after a status report.",
+		"- After a successful complete_goal call, do not call more tools; send a final visible user message summarizing what was completed, what was verified, and any relevant files/URLs.",
 		"</goal_context>",
 	]
 		.filter((line): line is string => Boolean(line))
@@ -82,7 +83,7 @@ export function renderGoalStartPrompt(goal: GoalState): string {
 			? `Token budget: ${goal.usage.total}/${goal.tokenBudget}`
 			: undefined,
 		"",
-		"Use tools as needed. Before each goal-state mutation, call get_goal in the same turn; use get_goal -> update_goal_progress for progress updates, and after any progress update call get_goal again before prepare_goal_completion or complete_goal. Keep progress updates honest. Complete the goal only with evidence after blockers/current work are resolved. For batch goals, do not stop after reporting one finished item; continue to the next unfinished item. A status summary/checkpoint is not a valid stopping point while the goal is active unless the goal is complete, verification is unrecoverably failing, a user decision is required, or a real operational blocker leaves no useful next action.",
+		"Use tools as needed. Before each goal-state mutation, call get_goal in the same turn; use get_goal -> update_goal_progress for progress updates, and after any progress update call get_goal again before prepare_goal_completion or complete_goal. Keep progress updates honest. Complete the goal only with evidence after blockers/current work are resolved. After a successful complete_goal call, do not call more tools; send a final visible user message summarizing completion evidence and any relevant files/URLs. For batch goals, do not stop after reporting one finished item; continue to the next unfinished item. A status summary/checkpoint is not a valid stopping point while the goal is active unless the goal is complete, verification is unrecoverably failing, a user decision is required, or a real operational blocker leaves no useful next action.",
 	]
 		.filter((line): line is string => Boolean(line))
 		.join("\n");

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 0.5.3 - 2026-07-09
+
 ### Added
 
 - real-runtime test harness (`tests/pi-runtime.e2e.test.ts`) that drives the
@@ -29,6 +31,8 @@
 - clarified caller flow for goal mutations: agents must use `get_goal ->
   update_goal_progress`, and after any progress mutation call `get_goal` again
   before completion or another mutation because the goal revision changed.
+- successful `complete_goal` calls now keep the turn alive and require a final
+  visible user summary instead of ending immediately with only internal tool output.
 
 ## 0.5.2 - 2026-07-07
 

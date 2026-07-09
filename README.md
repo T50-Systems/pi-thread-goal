@@ -6,7 +6,7 @@ Pi-native Claude-style `/goal` extension with branch-aware persistence, guarded 
 
 ## Status
 
-- Current version: `0.5.2`
+- Current version: `0.5.3`
 - Language: TypeScript
 - Runtime: Pi extension package
 - Maturity: usable early release with extensive tests
@@ -50,6 +50,7 @@ When a goal is active:
 - Guarded model tools with fresh observation/completion capability checks.
 - Anti-contradictory completion validation before `complete_goal` succeeds.
 - Runaway protection after evaluator-turn or token-budget limits.
+- Successful `complete_goal` calls keep the turn alive long enough for a final visible user summary instead of terminating silently.
 - Quiet internal tool UX: routine checkpoints avoid user-facing noise.
 
 ## Commands
@@ -92,6 +93,7 @@ The mutation protocol is intentionally strict:
 - completion must be prepared with matching evidence before `complete_goal`;
 - paused/completed goals reject stale mutating tools;
 - unresolved blockers prevent contradictory completion.
+- successful `complete_goal` returns `details.requiresFinalResponse=true` and instructs the agent to send a final visible summary before ending the turn.
 
 ## Repository layout
 
