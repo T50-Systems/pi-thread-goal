@@ -1,85 +1,56 @@
 # pi-thread-goal
 
-Pi-native Claude-style `/goal` for Pi.
+Pi-native Claude-style `/goal` extension with branch-aware persistence, guarded model tools, status UI, and automatic cross-turn continuation.
 
-`pi-thread-goal` adds a persistent goal system that behaves much closer to Claude Code semantics:
-
-- branch-aware goal state
-- hidden goal context on every active turn
-- post-turn evaluation of whether the goal is complete
-- automatic cross-turn continuation until the goal is met
-- model tools for reading and updating progress safely
+`pi-thread-goal` gives Pi a persistent goal system that behaves closer to Claude Code goal semantics: an active objective is carried across turns, progress is updated through guarded tools, completion is validated before mutation, and unmet goals can automatically continue until the objective is satisfied or safely paused.
 
 ## Status
 
-- current version: `0.5.2`
-- language: TypeScript
-- runtime: Pi extension package
-- maturity: usable early release
+- Current version: `0.5.2`
+- Language: TypeScript
+- Runtime: Pi extension package
+- Maturity: usable early release with extensive tests
 
 ## Why this exists
 
-Pi already has strong extension primitives, but it does not ship a built-in `/goal` workflow matching Claude Code's behavior.
+Pi has strong extension primitives, but it does not ship a built-in `/goal` workflow that mirrors Claude Code. This package aims for a middle ground:
 
-This package aims for the middle ground:
+- simpler than heavyweight draft/review workflow packages;
+- more Pi-native than file-backed hacks;
+- branch-aware across `/tree`, forks, resume, and compaction;
+- automatic when useful, but guarded against runaway loops and stale mutations.
 
-- simpler than heavyweight draft/review workflow packages
-- more Pi-native than file-backed hacks
-- closer to official Claude `/goal` semantics than manual-only goal helpers
-
-Instead of storing state in external files, it persists goal events through Pi session entries. That means goal state follows:
-
-- `/tree`
-- forks
-- resume
-- compaction
+Goal state is persisted as Pi session entries rather than as a separate external database.
 
 ## What it does
 
 When a goal is active:
 
-1. goal context is injected into future turns
-2. the agent works normally toward the objective
-3. at the end of the turn, a small evaluator model checks whether the goal condition is satisfied
-4. if the goal is not yet complete, the extension starts the next turn automatically
-5. when the goal is complete, it is marked complete and the run stops
+1. goal context is injected into future turns;
+2. the agent works normally toward the objective;
+3. progress/completion tools mutate state only after fresh observations and scoped capabilities;
+4. a small evaluator checks at turn end whether the goal is complete;
+5. unmet goals can queue the next continuation turn;
+6. completed goals are marked complete and the run stops cleanly.
 
 ## Features
 
-- Pi-native persistence via `appendEntry(...)`
-- branch-aware state reconstruction via `getBranch()`
-- event-sourced goal history
-- direct command UX
-- automatic continuation after each turn
-- compact widget with subtle background styling + interactive overlay status UI
-- elapsed goal runtime is shown in days, hours, minutes, and seconds in the widget, overlay, and status summary
-- compaction-aware summary augmentation
-- model tools with explicit guardrails
-- runaway protection: automatic continuation pauses after 25 evaluator turns without completion or when a configured token budget is reached
-- configurable token budget via `/goal <objective> --tokens 100k`
-- continuation delivery tracking records queued/sent/started/failed phases,
-  retry attempts, and stale pending state
-- stale continuation watchdog retries delivery with backoff and pauses with a
-  visible reason after repeated delivery failures
-- stale tool-call protection: progress/completion tools refuse to mutate paused or completed goals
-- retryable vs non-retryable evaluator error handling, with non-retryable failures pausing the goal for review
-- anti-contradictory completion validation before `complete_goal` can mark a goal complete
-- Mealy-style protocol policy uses scoped internal auto-capabilities before model tools can mutate or complete a goal
-- `complete_goal` returns `terminate: true` after successful completion so the turn can stop cleanly
-- quiet internal tool UX: progress/checkpoint tools return concise acknowledgements and automatic continuation avoids routine chatter
-- goal state is shown in the widget/overlay, not in Pi's input-adjacent status line
-
-## Install
-
-```bash
-pi install /absolute/path/to/pi-thread-goal
-```
-
-Or test without installing:
-
-```bash
-pi --no-extensions -e ./extensions/index.ts
-```
+- Pi-native persistence via `appendEntry(...)`.
+- Branch-aware state reconstruction through the active session branch.
+- Event-sourced goal history.
+- `/goal` command UX for create/status/edit/pause/resume/complete/clear/dismiss.
+- Hidden active-goal context injection.
+- Automatic continuation after incomplete turns.
+- Configurable token budget with `/goal <objective> --tokens 100k`.
+- Continuation delivery tracking for queued/sent/started/failed phases.
+- Stale continuation watchdog with retry/backoff and visible pause reason.
+- Compact status widget and expandable overlay UI.
+- Elapsed runtime display in days/hours/minutes/seconds.
+- Compaction-aware summary augmentation.
+- Guarded model tools with fresh observation/completion capability checks.
+- Anti-contradictory completion validation before `complete_goal` succeeds.
+- Runaway protection after evaluator-turn or token-budget limits.
+- Quiet internal tool UX: routine checkpoints avoid user-facing noise.
 
 ## Commands
 
@@ -98,83 +69,82 @@ pi --no-extensions -e ./extensions/index.ts
 /goal <objective> --replace [--start] [--tokens 100k]
 ```
 
-`/goal edit` opens a structured editor for the objective, acceptance criteria, source paths, and token budget. Completed goals remain visible in the widget until `/goal dismiss` hides them.
+`/goal edit` opens a structured editor for objective, acceptance criteria, source paths, and token budget. Completed goals remain visible until `/goal dismiss` hides them.
 
-`/goal resume` reactivates a paused goal and starts the next goal turn by default. Use `/goal resume --no-start` only when you want to update the stored status/UI without enqueueing a continuation prompt.
+`/goal resume` reactivates a paused goal and starts the next goal turn by default. Use `--no-start` only to update stored status/UI without enqueueing a continuation prompt.
 
-`/goal doctor` prints continuation diagnostics: pending phase, retry attempts,
-stale status, idle/pending-message probes, and a recommended recovery action.
+`/goal doctor` prints continuation diagnostics: pending phase, retry attempts, stale status, idle/pending-message probes, and recommended recovery action.
 
 ## Model tools
 
-- `get_goal`
-- `create_goal`
-- `prepare_goal_completion`
-- `complete_goal`
-- `update_goal_progress`
+```text
+get_goal
+create_goal
+update_goal_progress
+prepare_goal_completion
+complete_goal
+```
 
-Tool results are intentionally terse. The widget, `/goal status`, and structured
-tool `details` preserve debuggability without turning every internal checkpoint
-into user-facing narration. Mutating model tools require scoped internal
-auto-capabilities, not bearer tokens copied by the model: `get_goal` registers
-a fresh observation for the current context, `prepare_goal_completion` registers
-a completion candidate for the supplied evidence, and `complete_goal` must use
-matching evidence. Completion is guarded against contradictory state such as
-unresolved blockers, and a successful `complete_goal` response includes
-`terminate: true`. The extension clears Pi's input-adjacent goal status line so
-the active objective does not appear below the text box.
+The mutation protocol is intentionally strict:
 
-## Design principles
+- observe the current goal before mutating;
+- progress updates change the revision;
+- completion must be prepared with matching evidence before `complete_goal`;
+- paused/completed goals reject stale mutating tools;
+- unresolved blockers prevent contradictory completion.
 
-- active goals affect the agent via hidden context every turn
-- setting a goal starts work immediately
-- each completed turn is evaluated by a small model
-- unmet goals automatically continue into the next turn
-- replacement is guarded by UI confirmation or `--replace`
-- `/goal` is distinct from future interval-based `/loop` behavior
+## Repository layout
+
+```text
+extensions/index.ts          Pi extension entrypoint
+src/commands.ts              /goal command parsing and handlers
+src/continuation.ts          continuation delivery and watchdog logic
+src/evaluator.ts             turn-end evaluator integration
+src/goal-operations.ts       create/progress/prepare/complete operations
+src/goal-protocol.ts         tool protocol/capability policy
+src/goal-state*.ts           event-sourced state reconstruction/persistence
+src/runtime*.ts              runtime modes and actions
+src/tools.ts                 model tool registration
+src/ui.ts                    widget and overlay UI
+tests/                       unit, contract, runtime, and e2e-style tests
+```
+
+## Install
+
+```bash
+pi install git:github.com/T50-Systems/pi-thread-goal
+```
+
+Or test without installing globally:
+
+```bash
+pi --no-extensions -e ./extensions/index.ts
+```
 
 ## Development
 
-Install dependencies:
-
 ```bash
 npm install
-```
-
-Run checks:
-
-```bash
 npm run lint
 npm run typecheck
 npm test
 npm run test:coverage
+npm run test:e2e-pi   # opt-in live Pi smoke test
 ```
 
-## Release scope for `v0.3.0`
+## Documentation
 
-This release includes:
+- [`docs/PLAN.md`](docs/PLAN.md) — architecture and design intent.
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — planned issues.
+- [`docs/WORKLOG.md`](docs/WORKLOG.md) — implementation log.
+- [`CHANGELOG.md`](CHANGELOG.md) — release history.
 
-- core `/goal` command surface
-- Pi-native persistent state
-- evaluator-driven continuation loop
-- compact persistent widget plus expandable `/goal status` overlay
-- tests for commands, state, and runtime behavior
-- automatic continuation safety cap to prevent unbounded evaluator loops
+## Current non-goals
 
-It does **not** yet include:
-
-- time-based `/loop`
-- multi-goal queues
-- detached background runners
-- richer evaluator configuration UX
-- full interactive end-to-end fixtures
-
-## Docs
-
-- `docs/PLAN.md` — architecture and design intent
-- `docs/WORKLOG.md` — implementation log
-- `docs/ROADMAP.md` — planned issues after `v0.3.0`
-- `CHANGELOG.md` — release history
+- Time-based `/loop` scheduling.
+- Multi-goal queues.
+- Detached background runners.
+- Full interactive end-to-end fixtures for every UI path.
 
 ## License
 
