@@ -2,6 +2,47 @@
 
 ## Development setup
 
+### Prerequisites
+
+- **Node.js**: `>=22.0.0` (required for modern ESM and Pi compatibility).
+- **Pi CLI**: installed globally via `npm install -g @earendil-works/pi-coding-agent` (if you want to test the extension interactively).
+- **GitHub CLI (`gh`)**: optional but recommended for roadmap issue orchestration.
+
+### Shortest path to a verified change
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/T50-Systems/pi-thread-goal.git
+   cd pi-thread-goal
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Make your change:**
+   Edit files in `src/`, `tests/`, or `docs/`. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for module boundaries.
+
+4. **Run the local checks:**
+   ```bash
+   npm run lint
+   npm run typecheck
+   npm test
+   ```
+
+5. **Test interactively (optional):**
+   To test the extension inside Pi without installing it globally, run:
+   ```bash
+   pi --no-extensions -e ./extensions/index.ts
+   ```
+   Then type `/goal Start my test goal` in the Pi prompt.
+
+### Environment variables
+
+- `GOAL_EVALUATOR_TIMEOUT_MS`: overrides the default 45-second evaluator timeout during tests or live execution.
+- `PI_E2E`: set to `1` when running `npm run test:e2e-pi` to signal the live smoke suite.
+
 Install dependencies and run the standard checks before opening a PR:
 
 ```bash
