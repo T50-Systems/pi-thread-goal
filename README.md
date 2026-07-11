@@ -227,12 +227,17 @@ npm run lint
 npm run typecheck
 npm test
 npm run test:coverage
+npm run benchmark
 npm run test:e2e-pi   # opt-in live Pi smoke test
 ```
 
 ## Documentation
 
-- [`docs/PLAN.md`](docs/PLAN.md) — architecture and design intent.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — current components, ownership boundaries, control flow, and extension points.
+- [`docs/EXAMPLES.md`](docs/EXAMPLES.md) — practical goal recipes and integration guidance.
+- [`docs/LOOP_DESIGN.md`](docs/LOOP_DESIGN.md) — proposed boundary for a separate time-driven `/loop` companion.
+- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) — reproducible local performance baseline and optimization guidance.
+- [`docs/PLAN.md`](docs/PLAN.md) — original architecture and design intent.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — planned issues.
 - [`docs/PRODUCT.md`](docs/PRODUCT.md) — canonical product vision, principles, success metrics, and roadmap governance.
 - [`docs/WORKLOG.md`](docs/WORKLOG.md) — implementation log.

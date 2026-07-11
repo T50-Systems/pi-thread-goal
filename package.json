@@ -21,6 +21,7 @@
 		"lint:fix": "biome check --write .",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
+		"benchmark": "vitest bench --run",
 		"test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=lcov --coverage.include=src/**",
 		"test:e2e-pi": "cross-env PI_E2E=1 vitest run tests/pi-live.e2e.test.ts"
 	},
