@@ -6,6 +6,9 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
@@ -51,3 +54,41 @@ jobs:
 
       - name: Test
         run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: ${{ always() && matrix.node-version == 24 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-node-${{ matrix.node-version }}
+          path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 14
+
+  performance-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify 1,001-entry replay budget
+        run: |
+          echo "### State reconstruction regression check" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          environment="{\"runnerOS\":\"${{ runner.os }}\",\"runnerArch\":\"${{ runner.arch }}\",\"imageOS\":\"${ImageOS:-unknown}\",\"imageVersion\":\"${ImageVersion:-unknown}\"}"
+          echo "$environment"
+          echo "$environment" >> "$GITHUB_STEP_SUMMARY"
+          for sample in 1 2 3; do
+            result="$(npm run --silent verify:performance)"
+            echo "$result"
+            echo "$result" >> "$GITHUB_STEP_SUMMARY"
+          done
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

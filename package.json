@@ -22,13 +22,16 @@
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"benchmark": "vitest bench --run",
-		"test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=text --coverage.reporter=lcov --coverage.include=src/**",
+		"verify:performance": "tsx scripts/verify-state-reconstruction.ts",
+		"test:coverage": "vitest run --coverage",
 		"test:e2e-pi": "cross-env PI_E2E=1 vitest run tests/pi-live.e2e.test.ts"
 	},
 	"files": [
 		"extensions",
 		"src",
 		"README.md",
+		"SECURITY.md",
+		"CHANGELOG.md",
 		"LICENSE"
 	],
 	"peerDependencies": {
@@ -45,6 +48,7 @@
 		"cross-env": "^10.1.0",
 		"typebox": "^1.1.38",
 		"typescript": "^5.9.3",
+		"tsx": "^4.20.6",
 		"vitest": "^4.1.8"
 	},
 	"engines": {

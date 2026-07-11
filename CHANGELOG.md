@@ -6,6 +6,14 @@
 
 - configurable evaluator model selection through `GOAL_EVALUATOR_MODEL` or an evaluation option, with fallback to the normal provider heuristic when the requested model is unavailable.
 - explicit evaluator timeout configuration documentation for `GOAL_EVALUATOR_TIMEOUT_MS`.
+- repository-wide coverage floors with focused command-mutation and runtime-decision regression tests.
+- a deterministic 1,001-entry replay regression check with a 50 ms p99 CI budget and hosted-runner summaries.
+- a security policy, trust-boundary documentation, and weekly Dependabot checks for npm and GitHub Actions.
+
+### Changed
+
+- CI now declares read-only repository permissions, publishes LCOV output, and enforces the replay performance budget.
+- roadmap governance now separates issue-backed committed work, uncommitted ideas, and completed release/test evidence.
 
 ## 0.5.3 - 2026-07-09
 
