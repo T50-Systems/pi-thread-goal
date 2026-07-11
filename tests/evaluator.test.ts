@@ -4,6 +4,7 @@ import {
 	DEFAULT_EVALUATOR_TIMEOUT_MS,
 	evaluateGoal,
 	parseEvaluatorDecision,
+	pickEvaluatorModel,
 	resolveEvaluatorTimeoutMs,
 } from "../src/evaluator.js";
 import type { GoalRuntimeContext } from "../src/runtime-types.js";
@@ -64,6 +65,42 @@ describe("resolveEvaluatorTimeoutMs", () => {
 		expect(resolveEvaluatorTimeoutMs(undefined, {})).toBe(
 			DEFAULT_EVALUATOR_TIMEOUT_MS,
 		);
+	});
+});
+
+describe("pickEvaluatorModel", () => {
+	it("honors explicit and environment model overrides", () => {
+		const selected = { provider: "google", id: "gemini-fast" };
+		const ctx: GoalRuntimeContext = {
+			...makeCtx(),
+			model: { provider: "openai", id: "primary" },
+			modelRegistry: {
+				find: (provider, id) =>
+					provider === "google" && id === "gemini-fast" ? selected : undefined,
+				getApiKeyAndHeaders: async () => ({ ok: false }),
+			},
+		};
+
+		expect(pickEvaluatorModel(ctx, "google/gemini-fast", {})).toBe(selected);
+		expect(
+			pickEvaluatorModel(ctx, undefined, {
+				GOAL_EVALUATOR_MODEL: "google/gemini-fast",
+			}),
+		).toBe(selected);
+	});
+
+	it("falls back to the normal selection policy when override is unavailable", () => {
+		const primary = { provider: "openai", id: "primary" };
+		const ctx: GoalRuntimeContext = {
+			...makeCtx(),
+			model: primary,
+			modelRegistry: {
+				find: () => undefined,
+				getApiKeyAndHeaders: async () => ({ ok: false }),
+			},
+		};
+
+		expect(pickEvaluatorModel(ctx, "missing", {})).toBe(primary);
 	});
 });
 

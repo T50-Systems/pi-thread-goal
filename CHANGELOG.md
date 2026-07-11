@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- configurable evaluator model selection through `GOAL_EVALUATOR_MODEL` or an evaluation option, with fallback to the normal provider heuristic when the requested model is unavailable.
+- explicit evaluator timeout configuration documentation for `GOAL_EVALUATOR_TIMEOUT_MS`.
+
 ## 0.5.3 - 2026-07-09
 
 ### Added

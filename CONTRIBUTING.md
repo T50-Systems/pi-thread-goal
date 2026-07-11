@@ -41,6 +41,7 @@
 ### Environment variables
 
 - `GOAL_EVALUATOR_TIMEOUT_MS`: overrides the default 45-second evaluator timeout during tests or live execution.
+- `GOAL_EVALUATOR_MODEL`: selects an evaluator model as `provider/model-id` (for example `google/gemini-2.5-flash`) or a model ID for the active provider. Missing models fall back to the normal selection policy.
 - `PI_E2E`: set to `1` when running `npm run test:e2e-pi` to signal the live smoke suite.
 
 Install dependencies and run the standard checks before opening a PR:

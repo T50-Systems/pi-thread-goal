@@ -34,7 +34,7 @@ export interface GoalEvaluatorProvider {
 
 export const DEFAULT_EVALUATOR_TIMEOUT_MS = 45_000;
 export const EVALUATOR_TIMEOUT_ENV = "GOAL_EVALUATOR_TIMEOUT_MS";
-
+export const EVALUATOR_MODEL_ENV = "GOAL_EVALUATOR_MODEL";
 export function resolveEvaluatorTimeoutMs(
 	override?: number,
 	env: NodeJS.ProcessEnv = process.env,
@@ -140,6 +140,8 @@ const EVALUATOR_SYSTEM_PROMPT =
 
 export interface EvaluateGoalOptions {
 	timeoutMs?: number;
+	model?: string;
+	env?: NodeJS.ProcessEnv;
 	provider?: GoalEvaluatorProvider;
 }
 
@@ -148,7 +150,7 @@ export async function evaluateGoal(
 	ctx: GoalRuntimeContext,
 	options: EvaluateGoalOptions = {},
 ): Promise<EvaluatorDecision> {
-	const model = pickEvaluatorModel(ctx);
+	const model = pickEvaluatorModel(ctx, options.model, options.env);
 	if (!model) {
 		return {
 			met: false,
@@ -180,7 +182,7 @@ export async function evaluateGoal(
 			{ systemPrompt: EVALUATOR_SYSTEM_PROMPT, messages: [message] },
 			{ apiKey: auth.apiKey, headers: auth.headers, signal: ctx.signal },
 		),
-		resolveEvaluatorTimeoutMs(options.timeoutMs),
+		resolveEvaluatorTimeoutMs(options.timeoutMs, options.env),
 		"Goal evaluator timed out.",
 	);
 
@@ -192,7 +194,23 @@ export async function evaluateGoal(
 	return parseEvaluatorDecision(text);
 }
 
-function pickEvaluatorModel(ctx: GoalRuntimeContext): unknown {
+export function pickEvaluatorModel(
+	ctx: GoalRuntimeContext,
+	override?: string,
+	env: NodeJS.ProcessEnv = process.env,
+): unknown {
+	const configured = override?.trim() || env[EVALUATOR_MODEL_ENV]?.trim();
+	if (configured) {
+		const slash = configured.indexOf("/");
+		const provider =
+			slash > 0 ? configured.slice(0, slash) : ctx.model?.provider;
+		const id = slash > 0 ? configured.slice(slash + 1) : configured;
+		if (provider && id) {
+			const found = ctx.modelRegistry.find(provider, id);
+			if (found) return found;
+		}
+	}
+
 	const provider = ctx.model?.provider;
 	if (!provider) return ctx.model;
 
