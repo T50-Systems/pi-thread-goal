@@ -117,17 +117,107 @@ src/ui.ts                    widget and overlay UI
 tests/                       unit, contract, runtime, and e2e-style tests
 ```
 
-## Install
+## Quickstart
+
+Prerequisites: [Pi](https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent) installed and authenticated with a tool-capable model.
+
+### 1. Install the package
 
 ```bash
 pi install git:github.com/T50-Systems/pi-thread-goal
 ```
 
-Or test without installing globally:
+### 2. Start Pi
+
+Open Pi in the directory where you want the goal to run:
+
+```bash
+pi
+```
+
+### 3. Create a goal
+
+At the Pi prompt, enter:
+
+```text
+/goal Create a file named hello-goal.txt containing exactly "Goal complete", then verify its contents.
+```
+
+`/goal <objective>` creates the goal and starts work immediately. The goal widget shows the active objective, elapsed time, evaluator turns, token usage, and current progress while the agent works across turns.
+
+### 4. Inspect the result
+
+When the completion condition is satisfied, the goal changes to `complete` and the agent sends a final visible summary. Confirm the state at any time with:
+
+```text
+/goal status
+```
+
+Completed goals remain visible until you dismiss them:
+
+```text
+/goal dismiss
+```
+
+### Try it from a checkout
+
+To load the extension from this repository without installing it globally:
 
 ```bash
 pi --no-extensions -e ./extensions/index.ts
 ```
+
+## Troubleshooting
+
+### `/goal` is not available
+
+1. Confirm that the package is installed:
+
+   ```bash
+   pi list
+   ```
+
+2. Run `pi config` and verify that the package extension is enabled.
+3. Restart Pi, or run `/reload` if Pi was already open when the package was installed or updated.
+
+### The goal keeps continuing
+
+Run:
+
+```text
+/goal status
+/goal doctor
+```
+
+`/goal doctor` reports the continuation phase, retry count, stale-delivery state, idle and pending-message probes, and a recommended recovery action. If the goal should not continue, pause it explicitly:
+
+```text
+/goal pause
+```
+
+Automatic continuation is bounded: the extension pauses after the evaluator-turn limit or when the configured token budget is exhausted. A long-running valid goal is not necessarily a runaway loop; use `/goal doctor` to distinguish active work from stale or duplicate delivery.
+
+### The goal stopped before completion
+
+Check `/goal doctor` first. If the goal is paused and the blocking condition has been resolved, resume it with:
+
+```text
+/goal resume
+```
+
+`/goal resume` reactivates the goal and starts the next goal-directed turn by default. If the goal is already active but needs another turn, use:
+
+```text
+/goal start
+```
+
+### Goal context appears missing or stale
+
+Goal context is injected as a hidden message, so it is not expected to appear in the visible conversation. Use `/goal status` as the source of truth for the current branch.
+
+Goal state is branch-aware. After `/tree`, a fork, or a resumed session, the selected branch may contain a different goal state. If the expected goal is present but paused, use `/goal resume`; if it is active but idle, run `/goal doctor` and follow its recommended recovery action.
+
+After installing or updating the extension, restart Pi or run `/reload` before diagnosing context injection.
 
 ## Development
 
