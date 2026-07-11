@@ -22,6 +22,12 @@ Pi has strong extension primitives, but it does not ship a built-in `/goal` work
 
 Goal state is persisted as Pi session entries rather than as a separate external database.
 
+## Product vision
+
+Make `pi-thread-goal` the Pi-native standard for safe, observable, low-noise autonomous goal execution across turns.
+
+See [`docs/PRODUCT.md`](docs/PRODUCT.md) for the canonical product promise, principles, success metrics, and roadmap governance.
+
 ## What it does
 
 When a goal is active:
@@ -138,6 +144,7 @@ npm run test:e2e-pi   # opt-in live Pi smoke test
 
 - [`docs/PLAN.md`](docs/PLAN.md) — architecture and design intent.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — planned issues.
+- [`docs/PRODUCT.md`](docs/PRODUCT.md) — canonical product vision, principles, success metrics, and roadmap governance.
 - [`docs/WORKLOG.md`](docs/WORKLOG.md) — implementation log.
 - [`CHANGELOG.md`](CHANGELOG.md) — release history.
 

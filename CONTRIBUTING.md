@@ -54,4 +54,10 @@ Use conventional commits, matching the existing history: `chore:`, `test:`, `doc
 
 ## Pull requests
 
+
 PRs should keep CI green, include focused tests for behavior changes, and add a `CHANGELOG.md` entry under `[Unreleased]` when user-facing behavior, tooling, CI, or docs change.
+
+For Roadmap/Architecture work:
+- PRs addressing roadmap items must indicate the **KPI(s) impacted** in the description.
+- If claiming a performance improvement, attach the baseline, environment, and a reproducible benchmark.
+- If changing diagnostic/tooling messages, update or add tests asserting the new noise/recovery rules.
