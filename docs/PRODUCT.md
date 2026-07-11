@@ -36,5 +36,6 @@ A user can state a completion condition once and trust the extension to continue
 
 ## Roadmap governance
 
-Every `Next` item must list: KPI, expected movement, verification evidence.
-Completed items must link release/test evidence. Items without a measurable outcome remain in `Soon`/`Later`.
+Every `Next` item must link a currently open issue and list KPI, expected movement, owner/status, and verification evidence. Uncommitted concepts remain explicitly labeled in `Ideas`. Completed items move to the roadmap's evidence table with release or test links instead of remaining in a pending section.
+
+Maintainers review the backlog before every minor release. Items without progress for two consecutive reviews are deferred; obsolete or unmeasurable items are removed with rationale retained in the issue.
