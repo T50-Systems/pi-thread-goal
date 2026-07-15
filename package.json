@@ -46,7 +46,7 @@
 		"@earendil-works/pi-ai": "0.80.7",
 		"@earendil-works/pi-coding-agent": "0.80.7",
 		"@types/node": "^24.10.1",
-		"@vitest/coverage-v8": "4.1.9",
+		"@vitest/coverage-v8": "4.1.10",
 		"actionlint": "2.0.6",
 		"cross-env": "^10.1.0",
 		"tsx": "^4.20.6",
