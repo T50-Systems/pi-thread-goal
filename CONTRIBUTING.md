@@ -7,6 +7,7 @@
 - **Node.js**: `>=22.0.0` (required for modern ESM and Pi compatibility).
 - **Pi CLI**: installed globally via `npm install -g @earendil-works/pi-coding-agent` (if you want to test the extension interactively).
 - **GitHub CLI (`gh`)**: optional but recommended for roadmap issue orchestration.
+- **Bash**: available on `PATH` for offline syntax validation of workflow `run:` blocks (Git for Windows includes it).
 
 ### Shortest path to a verified change
 
@@ -18,7 +19,7 @@
 
 2. **Install dependencies:**
    ```bash
-   npm install
+   npm ci
    ```
 
 3. **Make your change:**
@@ -26,6 +27,7 @@
 
 4. **Run the local checks:**
    ```bash
+   npm run validate:workflows
    npm run lint
    npm run typecheck
    npm test
@@ -47,7 +49,8 @@
 Install dependencies and run the standard checks before opening a PR:
 
 ```bash
-npm install
+npm ci
+npm run validate:workflows
 npm run lint
 npm run typecheck
 npm test
@@ -58,6 +61,8 @@ Use `npm run lint:fix` for safe Biome formatting fixes. Coverage can be checked 
 ```bash
 npm run test:coverage
 ```
+
+Workflow/action dependency changes must follow the immutable-pin review procedure in [`docs/WORKFLOW_SECURITY.md`](docs/WORKFLOW_SECURITY.md). Keep each remote action on a full reviewed commit SHA with a release-version comment; do not merge until the pinned action has run successfully in pull-request CI.
 
 ## Code style
 

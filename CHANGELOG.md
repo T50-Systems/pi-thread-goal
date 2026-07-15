@@ -9,6 +9,7 @@
 - repository-wide coverage floors with focused command-mutation and runtime-decision regression tests.
 - a deterministic 1,001-entry replay regression check with a 50 ms p99 CI budget and hosted-runner summaries.
 - a security policy, trust-boundary documentation, and weekly Dependabot checks for npm and GitHub Actions.
+- immutable commit-SHA pins for third-party GitHub Actions plus offline semantic and pin-policy validation with negative fixtures.
 
 ### Changed
 

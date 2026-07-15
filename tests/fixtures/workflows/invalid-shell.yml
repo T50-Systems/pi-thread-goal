@@ -1,0 +1,7 @@
+name: Invalid shell workflow
+on: push
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: if then; echo nope

@@ -20,6 +20,7 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"typecheck": "tsc --noEmit",
+		"validate:workflows": "node scripts/validate-workflows.mjs",
 		"test": "vitest run",
 		"benchmark": "vitest bench --run",
 		"verify:performance": "tsx scripts/verify-state-reconstruction.ts",
@@ -45,11 +46,13 @@
 		"@earendil-works/pi-coding-agent": "^0.80.2",
 		"@types/node": "^24.10.1",
 		"@vitest/coverage-v8": "4.1.9",
+		"actionlint": "2.0.6",
 		"cross-env": "^10.1.0",
+		"tsx": "^4.20.6",
 		"typebox": "^1.1.38",
 		"typescript": "^5.9.3",
-		"tsx": "^4.20.6",
-		"vitest": "^4.1.8"
+		"vitest": "^4.1.8",
+		"yaml": "2.9.0"
 	},
 	"engines": {
 		"node": ">=22.0.0"

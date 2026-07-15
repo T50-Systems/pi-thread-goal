@@ -222,7 +222,8 @@ After installing or updating the extension, restart Pi or run `/reload` before d
 ## Development
 
 ```bash
-npm install
+npm ci
+npm run validate:workflows
 npm run lint
 npm run typecheck
 npm test
@@ -241,6 +242,7 @@ npm run test:e2e-pi   # opt-in live Pi smoke test
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — planned issues.
 - [`docs/PRODUCT.md`](docs/PRODUCT.md) — canonical product vision, principles, success metrics, and roadmap governance.
 - [`docs/WORKLOG.md`](docs/WORKLOG.md) — implementation log.
+- [`docs/WORKFLOW_SECURITY.md`](docs/WORKFLOW_SECURITY.md) — immutable GitHub Actions pins, offline semantic validation, and update-review policy.
 - [`CHANGELOG.md`](CHANGELOG.md) — release history.
 
 ## Current non-goals
