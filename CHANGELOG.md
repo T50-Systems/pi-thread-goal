@@ -10,11 +10,13 @@
 - a deterministic 1,001-entry replay regression check with a 50 ms p99 CI budget and hosted-runner summaries.
 - a security policy, trust-boundary documentation, and weekly Dependabot checks for npm and GitHub Actions.
 - immutable commit-SHA pins for third-party GitHub Actions plus offline semantic and pin-policy validation with negative fixtures.
+- packed-extension compatibility CI for the maintained minimum and current Pi/TypeBox sets, including allowlist inspection and a provider-free real-`SessionManager` protocol smoke.
 
 ### Changed
 
 - CI now declares read-only repository permissions, publishes LCOV output, and enforces the replay performance budget.
 - roadmap governance now separates issue-backed committed work, uncommitted ideas, and completed release/test evidence.
+- wildcard Pi and TypeBox peers are replaced by the explicitly tested compatibility range, with documented registry and release-update evidence.
 
 ## 0.5.3 - 2026-07-09
 

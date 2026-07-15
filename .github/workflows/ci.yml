@@ -34,6 +34,25 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+  packed-compatibility:
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compatibility: [minimum, current]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+
+      - name: Pack and test ${{ matrix.compatibility }} compatibility
+        run: npm run test:packed -- --set ${{ matrix.compatibility }}
+
   test:
     runs-on: ubuntu-latest
     strategy:

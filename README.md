@@ -11,6 +11,17 @@ Pi-native Claude-style `/goal` extension with branch-aware persistence, guarded 
 - Runtime: Pi extension package
 - Maturity: usable early release with extensive tests
 
+## Pi compatibility
+
+The supported packed-extension matrix is:
+
+| Set | `@earendil-works/pi-coding-agent` | `@earendil-works/pi-ai` | `typebox` |
+|---|---:|---:|---:|
+| Maintained minimum | `0.74.2` | `0.74.2` | `1.1.24` |
+| Current (latest tested) | `0.80.7` | `0.80.7` | `1.1.38` |
+
+Peer ranges are bounded to these tested versions. Maintainers check the npm registry weekly and before each release; ranges advance only with successful minimum/current tarball evidence. See [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) for the registry basis, provider-free `SessionManager` smoke, update cadence, and release gate.
+
 ## Why this exists
 
 Pi has strong extension primitives, but it does not ship a built-in `/goal` workflow that mirrors Claude Code. This package aims for a middle ground:
@@ -229,6 +240,7 @@ npm run typecheck
 npm test
 npm run test:coverage
 npm run benchmark
+npm run test:packed   # npm-pack + fresh minimum/current Pi consumers
 npm run test:e2e-pi   # opt-in live Pi smoke test
 ```
 
@@ -243,6 +255,7 @@ npm run test:e2e-pi   # opt-in live Pi smoke test
 - [`docs/PRODUCT.md`](docs/PRODUCT.md) — canonical product vision, principles, success metrics, and roadmap governance.
 - [`docs/WORKLOG.md`](docs/WORKLOG.md) — implementation log.
 - [`docs/WORKFLOW_SECURITY.md`](docs/WORKFLOW_SECURITY.md) — immutable GitHub Actions pins, offline semantic validation, and update-review policy.
+- [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) — exact supported Pi/TypeBox sets, packed-consumer evidence, and release update policy.
 - [`CHANGELOG.md`](CHANGELOG.md) — release history.
 
 ## Current non-goals
