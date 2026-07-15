@@ -52,7 +52,7 @@
 		"tsx": "^4.20.6",
 		"typebox": "1.1.38",
 		"typescript": "^5.9.3",
-		"vitest": "^4.1.8",
+		"vitest": "^4.1.10",
 		"yaml": "2.9.0"
 	},
 	"engines": {
