@@ -31,6 +31,7 @@
    npm run lint
    npm run typecheck
    npm test
+   npm run test:packed
    ```
 
 5. **Test interactively (optional):**
@@ -54,6 +55,7 @@ npm run validate:workflows
 npm run lint
 npm run typecheck
 npm test
+npm run test:packed
 ```
 
 Use `npm run lint:fix` for safe Biome formatting fixes. Coverage can be checked with:
@@ -63,6 +65,12 @@ npm run test:coverage
 ```
 
 Workflow/action dependency changes must follow the immutable-pin review procedure in [`docs/WORKFLOW_SECURITY.md`](docs/WORKFLOW_SECURITY.md). Keep each remote action on a full reviewed commit SHA with a release-version comment; do not merge until the pinned action has run successfully in pull-request CI.
+
+### Compatibility and release gate
+
+The exact supported Pi/TypeBox sets and registry basis are maintained in [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md). Run `npm run test:packed` before release-facing changes; it packs the package, checks the allowlist, installs the tarball in fresh minimum/current consumers, and runs the provider-free real-`SessionManager` goal protocol.
+
+Do not change `peerDependencies` or the documented supported Pi range until the same pull request contains registry evidence for the proposed aligned versions and passing packed-consumer results for both resulting bounds. Re-run the matrix immediately before every release in addition to the weekly dependency review.
 
 ## Code style
 
@@ -82,6 +90,7 @@ Pi host, not just hand-built fakes:
 - **Real-runtime harness** (`tests/pi-runtime.e2e.test.ts`) — drives the
   extension against Pi's actual `SessionManager`, so `sessionId`, `leafId`, and
   `getBranch` behave like a live session. Runs as part of `npm test`.
+- **Packed compatibility** (`scripts/verify-packed-extension.mjs`) — loads the installed tarball from fresh consumers at the maintained minimum and current Pi sets, then runs create → observe → progress → complete with the real `SessionManager`. It is deterministic, provider-free, and runs in CI only after workflow validation succeeds.
 - **Live end-to-end** (`tests/pi-live.e2e.test.ts`) — launches a real Pi
   session with a real model and completes a goal through the tools. It is
   opt-in (needs a configured provider and makes billable model calls) and is

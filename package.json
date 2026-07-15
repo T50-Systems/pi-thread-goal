@@ -25,7 +25,8 @@
 		"benchmark": "vitest bench --run",
 		"verify:performance": "tsx scripts/verify-state-reconstruction.ts",
 		"test:coverage": "vitest run --coverage",
-		"test:e2e-pi": "cross-env PI_E2E=1 vitest run tests/pi-live.e2e.test.ts"
+		"test:e2e-pi": "cross-env PI_E2E=1 vitest run tests/pi-live.e2e.test.ts",
+		"test:packed": "node scripts/verify-packed-extension.mjs"
 	},
 	"files": [
 		"extensions",
@@ -36,20 +37,20 @@
 		"LICENSE"
 	],
 	"peerDependencies": {
-		"@earendil-works/pi-ai": "*",
-		"@earendil-works/pi-coding-agent": "*",
-		"typebox": "*"
+		"@earendil-works/pi-ai": ">=0.74.2 <=0.80.7",
+		"@earendil-works/pi-coding-agent": ">=0.74.2 <=0.80.7",
+		"typebox": ">=1.1.24 <=1.1.38"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",
-		"@earendil-works/pi-ai": "^0.80.2",
-		"@earendil-works/pi-coding-agent": "^0.80.2",
+		"@earendil-works/pi-ai": "0.80.7",
+		"@earendil-works/pi-coding-agent": "0.80.7",
 		"@types/node": "^24.10.1",
 		"@vitest/coverage-v8": "4.1.9",
 		"actionlint": "2.0.6",
 		"cross-env": "^10.1.0",
 		"tsx": "^4.20.6",
-		"typebox": "^1.1.38",
+		"typebox": "1.1.38",
 		"typescript": "^5.9.3",
 		"vitest": "^4.1.8",
 		"yaml": "2.9.0"
