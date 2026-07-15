@@ -1,0 +1,6 @@
+name: Invalid semantic workflow
+on: push
+jobs:
+  validate:
+    steps:
+      - run: npm test

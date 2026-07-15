@@ -1,0 +1,10 @@
+name: Inherited unsupported shell workflow
+on: push
+defaults:
+  run:
+    shell: pwsh
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: Write-Host "PowerShell syntax"

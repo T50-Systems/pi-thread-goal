@@ -1,0 +1,8 @@
+name: Invalid expression workflow
+on: push
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ github.ref == }}
+        run: echo ok

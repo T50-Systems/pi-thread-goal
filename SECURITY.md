@@ -35,6 +35,10 @@ The full Pi session history, raw session-entry store, source paths, usage counte
 
 The extension registers goal-state tools and a `/goal` command. Goal tools can append session entries only after protocol observation and revision checks; user commands can create, edit, pause, resume, complete, dismiss, replace, or clear goal state. The extension can queue follow-up user messages through Pi, update UI elements, read the active branch, and call the configured evaluator provider. It does not itself grant filesystem, shell, network, deployment, or billing authority, but the primary Pi agent may have those capabilities. A goal must not be treated as authorization for sensitive actions: host policies and explicit user approval still apply.
 
+### GitHub Actions supply chain
+
+Repository workflows execute only reviewed remote actions pinned to full commit SHAs. `npm run validate:workflows` checks workflow semantics and rejects mutable remote references before merge; the same command runs in pull-request CI with read-only repository permissions. Dependabot may propose SHA updates, but maintainers must verify publisher ownership, official release notes, permissions, and tag-to-commit provenance using [`docs/WORKFLOW_SECURITY.md`](docs/WORKFLOW_SECURITY.md). Release publication retains a separate opt-in boundary and must never expose `NPM_TOKEN` to pull-request jobs.
+
 ## Maintainer response
 
 Maintainers will validate the report, assess affected versions, coordinate a fix and tests, and publish release notes without exposing reporter data. Dependency alerts are reviewed alongside weekly npm and GitHub Actions update checks.
