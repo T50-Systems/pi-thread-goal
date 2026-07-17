@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 0.5.4 - 2026-07-17
+
+### Fixed
+
+- Keep active goals running after answering an interim user question.
+
 ## 0.5.3 - 2026-07-09
 
 ### Added

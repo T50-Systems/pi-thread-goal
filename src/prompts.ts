@@ -31,6 +31,7 @@ export function renderGoalContext(goal: GoalState): string {
 		"- Use update_goal_progress only for honest semantic progress updates.",
 		"- Blocked means operationally blocked: no useful next action remains without a user, runtime, or external decision. Do not record technical risk, uncertainty, or difficult-but-actionable work as Blocked.",
 		"- Before any user-facing status/final response while active, run the stop check: goal complete, unrecoverable failing verification, user decision needed, or real operational blocker. If none applies, do not answer with a checkpoint; select the next unfinished item and continue using tools.",
+		"- An interim user question does not pause or complete the active goal: answer the question directly, then resume the next unfinished goal item unless the user explicitly asks to pause, stop, or change the goal.",
 		"- To complete after any progress update: call get_goal, then prepare_goal_completion with evidence, then complete_goal with the same evidence.",
 		"- For ongoing batch goals, finishing one item is progress only; continue with the next unfinished item instead of stopping after a status report.",
 		"- After a successful complete_goal call, do not call more tools; send a final visible user message summarizing what was completed, what was verified, and any relevant files/URLs.",
@@ -84,6 +85,7 @@ export function renderGoalStartPrompt(goal: GoalState): string {
 			: undefined,
 		"",
 		"Use tools as needed. Before each goal-state mutation, call get_goal in the same turn; use get_goal -> update_goal_progress for progress updates, and after any progress update call get_goal again before prepare_goal_completion or complete_goal. Keep progress updates honest. Complete the goal only with evidence after blockers/current work are resolved. After a successful complete_goal call, do not call more tools; send a final visible user message summarizing completion evidence and any relevant files/URLs. For batch goals, do not stop after reporting one finished item; continue to the next unfinished item. A status summary/checkpoint is not a valid stopping point while the goal is active unless the goal is complete, verification is unrecoverably failing, a user decision is required, or a real operational blocker leaves no useful next action.",
+		"If the user asks an interim question, answer it directly without treating it as a pause or completion request, then resume the next unfinished goal item unless the user explicitly asks to pause, stop, or change the goal.",
 	]
 		.filter((line): line is string => Boolean(line))
 		.join("\n");
@@ -133,6 +135,7 @@ export function renderGoalContinuationPrompt(
 		"Stop only for: completed objective, unrecoverable failing verification, required user decision, or real operational blocker where no useful next action remains.",
 		"Treat technical risk, uncertainty, or difficult-but-actionable work as progress/current context rather than Blocked; continue with another useful action when possible.",
 		"When updating progress, use get_goal -> update_goal_progress. If you need another mutation after update_goal_progress, call get_goal again first because the progress update changed the goal revision.",
+		"An interim user question does not pause or complete the active goal: answer it directly, then resume the next unfinished goal item unless the user explicitly asks to pause, stop, or change the goal.",
 		"",
 		`goal_id: ${escapeXml(goal.goalId)}`,
 		`<goal_condition>${escapeXml(goal.objective)}</goal_condition>`,

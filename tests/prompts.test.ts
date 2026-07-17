@@ -42,10 +42,15 @@ describe("goal prompts", () => {
 		expect(context).toContain("Before any user-facing status/final response");
 		expect(context).toContain("do not answer with a checkpoint");
 		expect(context).toContain("After a successful complete_goal call");
+		expect(context).toContain(
+			"An interim user question does not pause or complete the active goal",
+		);
+		expect(continuation).toContain("resume the next unfinished goal item");
 		expect(start).toContain("do not stop after reporting one finished item");
 		expect(start).toContain(
 			"A status summary/checkpoint is not a valid stopping point",
 		);
+		expect(start).toContain("interim question");
 		expect(start).toContain("After a successful complete_goal call");
 		expect(continuation).toContain("invalid checkpoint stop");
 		expect(continuation).toContain("choose the next unfinished item");
