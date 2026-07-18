@@ -44,7 +44,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",
 		"@earendil-works/pi-ai": "0.80.7",
-		"@earendil-works/pi-coding-agent": "0.80.7",
+		"@earendil-works/pi-coding-agent": "0.80.10",
 		"@types/node": "^24.10.1",
 		"@vitest/coverage-v8": "4.1.9",
 		"actionlint": "2.0.6",
