@@ -68,7 +68,11 @@ function run(command, args, options = {}) {
 }
 
 function runNpm(args, options = {}) {
-	if (process.env.npm_execpath) {
+	// This is an npm-consumer compatibility test, even when pnpm launches it.
+	if (
+		process.env.npm_execpath &&
+		/(?:^|[/\\])npm-cli\.js$/.test(process.env.npm_execpath)
+	) {
 		return run(process.execPath, [process.env.npm_execpath, ...args], options);
 	}
 	return run(npmCommand, args, {

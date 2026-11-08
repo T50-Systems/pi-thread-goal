@@ -16,23 +16,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 10.34.9
+          run_install: false
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Validate workflows
-        run: npm run validate:workflows
+        run: pnpm run validate:workflows
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
 
   packed-compatibility:
     needs: lint-and-typecheck
@@ -45,13 +50,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 10.34.9
+          run_install: false
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
 
       - name: Pack and test ${{ matrix.compatibility }} compatibility
-        run: npm run test:packed -- --set ${{ matrix.compatibility }}
+        run: pnpm run test:packed --set ${{ matrix.compatibility }}
 
   test:
     runs-on: ubuntu-latest
@@ -62,20 +72,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 10.34.9
+          run_install: false
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
+          cache: pnpm
 
       - name: Install
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Security Audit
-        run: npm audit --audit-level=high
+        run: pnpm audit --audit-level=high
 
       - name: Test
-        run: npm run test:coverage
+        run: pnpm run test:coverage
 
       - name: Upload coverage report
         if: ${{ always() && matrix.node-version == 24 }}
@@ -92,14 +107,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 10.34.9
+          run_install: false
       - name: Setup Node
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Verify 1,001-entry replay budget
         run: |
@@ -109,7 +129,7 @@ jobs:
           echo "$environment"
           echo "$environment" >> "$GITHUB_STEP_SUMMARY"
           for sample in 1 2 3; do
-            result="$(npm run --silent verify:performance)"
+            result="$(pnpm run --silent verify:performance)"
             echo "$result"
             echo "$result" >> "$GITHUB_STEP_SUMMARY"
           done
