@@ -19,7 +19,7 @@
 
 2. **Install dependencies:**
    ```bash
-   npm ci
+   pnpm install --frozen-lockfile
    ```
 
 3. **Make your change:**
@@ -27,11 +27,11 @@
 
 4. **Run the local checks:**
    ```bash
-   npm run validate:workflows
-   npm run lint
-   npm run typecheck
-   npm test
-   npm run test:packed
+   pnpm run validate:workflows
+   pnpm run lint
+   pnpm run typecheck
+   pnpm test
+   pnpm run test:packed
    ```
 
 5. **Test interactively (optional):**
@@ -45,30 +45,30 @@
 
 - `GOAL_EVALUATOR_TIMEOUT_MS`: overrides the default 45-second evaluator timeout during tests or live execution.
 - `GOAL_EVALUATOR_MODEL`: selects an evaluator model as `provider/model-id` (for example `google/gemini-2.5-flash`) or a model ID for the active provider. Missing models fall back to the normal selection policy.
-- `PI_E2E`: set to `1` when running `npm run test:e2e-pi` to signal the live smoke suite.
+- `PI_E2E`: set to `1` when running `pnpm run test:e2e-pi` to signal the live smoke suite.
 
 Install dependencies and run the standard checks before opening a PR:
 
 ```bash
-npm ci
-npm run validate:workflows
-npm run lint
-npm run typecheck
-npm test
-npm run test:packed
+pnpm install --frozen-lockfile
+pnpm run validate:workflows
+pnpm run lint
+pnpm run typecheck
+pnpm test
+pnpm run test:packed
 ```
 
-Use `npm run lint:fix` for safe Biome formatting fixes. Coverage can be checked with:
+Use `pnpm run lint:fix` for safe Biome formatting fixes. Coverage can be checked with:
 
 ```bash
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 Workflow/action dependency changes must follow the immutable-pin review procedure in [`docs/WORKFLOW_SECURITY.md`](docs/WORKFLOW_SECURITY.md). Keep each remote action on a full reviewed commit SHA with a release-version comment; do not merge until the pinned action has run successfully in pull-request CI.
 
 ### Compatibility and release gate
 
-The exact supported Pi/TypeBox sets and registry basis are maintained in [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md). Run `npm run test:packed` before release-facing changes; it packs the package, checks the allowlist, installs the tarball in fresh minimum/current consumers, and runs the provider-free real-`SessionManager` goal protocol.
+The exact supported Pi/TypeBox sets and registry basis are maintained in [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md). Run `pnpm run test:packed` before release-facing changes; it packs the package, checks the allowlist, installs the tarball in fresh minimum/current consumers, and runs the provider-free real-`SessionManager` goal protocol.
 
 Do not change `peerDependencies` or the documented supported Pi range until the same pull request contains registry evidence for the proposed aligned versions and passing packed-consumer results for both resulting bounds. Re-run the matrix immediately before every release in addition to the weekly dependency review.
 
@@ -80,16 +80,16 @@ Biome owns formatting and linting. Keep the existing style: tabs, double quotes,
 
 ## Tests
 
-Run the full suite with `npm test`. It is fast, deterministic, and offline.
+Run the full suite with `pnpm test`. It is fast, deterministic, and offline.
 
 The suite is layered so that runtime assumptions are checked against the real
 Pi host, not just hand-built fakes:
 
 - **Unit / in-process** — most of `tests/`, including the `/goal`
-  auto-continuation smoke (`npm test -- tests/e2e-smoke.test.ts`).
+  auto-continuation smoke (`pnpm test -- tests/e2e-smoke.test.ts`).
 - **Real-runtime harness** (`tests/pi-runtime.e2e.test.ts`) — drives the
   extension against Pi's actual `SessionManager`, so `sessionId`, `leafId`, and
-  `getBranch` behave like a live session. Runs as part of `npm test`.
+  `getBranch` behave like a live session. Runs as part of `pnpm test`.
 - **Packed compatibility** (`scripts/verify-packed-extension.mjs`) — loads the installed tarball from fresh consumers at the maintained minimum and current Pi sets, then runs create → observe → progress → complete with the real `SessionManager`. It is deterministic, provider-free, and runs in CI only after workflow validation succeeds.
 - **Live end-to-end** (`tests/pi-live.e2e.test.ts`) — launches a real Pi
   session with a real model and completes a goal through the tools. It is
@@ -97,7 +97,7 @@ Pi host, not just hand-built fakes:
   skipped by default. Run it before cutting a release:
 
   ```bash
-  npm run test:e2e-pi
+  pnpm run test:e2e-pi
   ```
 
 When adding fakes for the Pi context, keep them adversarial (advancing

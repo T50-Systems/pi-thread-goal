@@ -233,15 +233,15 @@ After installing or updating the extension, restart Pi or run `/reload` before d
 ## Development
 
 ```bash
-npm ci
-npm run validate:workflows
-npm run lint
-npm run typecheck
-npm test
-npm run test:coverage
-npm run benchmark
-npm run test:packed   # npm-pack + fresh minimum/current Pi consumers
-npm run test:e2e-pi   # opt-in live Pi smoke test
+pnpm install --frozen-lockfile
+pnpm run validate:workflows
+pnpm run lint
+pnpm run typecheck
+pnpm test
+pnpm run test:coverage
+pnpm run benchmark
+pnpm run test:packed   # npm-pack + fresh minimum/current Pi consumers
+pnpm run test:e2e-pi   # opt-in live Pi smoke test
 ```
 
 ## Documentation

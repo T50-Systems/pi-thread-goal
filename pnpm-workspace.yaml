@@ -1,0 +1,4 @@
+enablePrePostScripts: true
+onlyBuiltDependencies:
+  - esbuild
+  - pi-anchor-edit-core
